@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { BarChart3, Boxes, CircleDollarSign, PackageOpen, TrendingUp, Clock } from 'lucide-react';
+import { BarChart3, PackageOpen, ArrowDownLeft, TestTube, RotateCcw, Boxes, CircleDollarSign, TrendingUp, Clock } from 'lucide-react';
 import DashboardCard from '../components/dashboard/DashboardCard';
 import StatCard from '../components/dashboard/StatCard';
 import RecentActivity from '../components/dashboard/RecentActivity';
@@ -8,36 +7,36 @@ import RecentActivity from '../components/dashboard/RecentActivity';
 // Mock data for the dashboard
 const statsData = [
   {
-    title: 'Total Products',
+    title: 'IMEI Stock',
     value: '1,243',
     change: '+12%',
     trend: 'up',
-    icon: Boxes,
-    description: 'Total products in inventory'
-  },
-  {
-    title: 'Total Sales',
-    value: '$45,231',
-    change: '+8%',
-    trend: 'up',
-    icon: CircleDollarSign,
-    description: 'Revenue from all sales'
-  },
-  {
-    title: 'Low Stock',
-    value: '13',
-    change: '-2',
-    trend: 'down',
     icon: PackageOpen,
-    description: 'Items with low inventory'
+    description: 'Total IMEI units in inventory'
   },
   {
-    title: 'Avg. Order Value',
-    value: '$239',
+    title: 'Booked Out/In',
+    value: '652 / 873',
     change: '+5%',
     trend: 'up',
-    icon: TrendingUp,
-    description: 'Average value per order'
+    icon: ArrowDownLeft,
+    description: 'Units sent out vs added'
+  },
+  {
+    title: 'IMEI Units Pending QC',
+    value: '87',
+    change: '+13',
+    trend: 'up',
+    icon: TestTube,
+    description: 'Units awaiting quality control'
+  },
+  {
+    title: 'IMEI Returns',
+    value: '34',
+    change: '-7',
+    trend: 'down',
+    icon: RotateCcw,
+    description: 'Total units returned'
   },
 ];
 
