@@ -38,7 +38,7 @@ const App = () => {
             <Navbar toggleSidebar={toggleSidebar} />
             <div className="flex flex-1 overflow-hidden">
               <Sidebar isOpen={sidebarOpen} closeSidebar={closeSidebar} />
-              <main className="flex-1 overflow-y-auto p-4 pt-6 md:p-6">
+              <main className="flex-1 overflow-y-auto p-4 pt-6 md:p-6 md:ml-64">
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/products" element={<Products />} />

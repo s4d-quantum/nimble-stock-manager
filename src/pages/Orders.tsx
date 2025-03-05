@@ -113,7 +113,7 @@ const Orders = () => {
   return (
     <div className="animate-fade-in">
       <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Sales Orders</h1>
         <p className="text-muted-foreground">View and manage customer orders.</p>
       </div>
       

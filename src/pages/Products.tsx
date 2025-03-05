@@ -43,7 +43,7 @@ const Products = () => {
   return (
     <div className="animate-fade-in">
       <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold tracking-tight">Products</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Inventory</h1>
         <p className="text-muted-foreground">Manage your product inventory.</p>
       </div>
       

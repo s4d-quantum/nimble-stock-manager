@@ -1,29 +1,92 @@
 
 import React from 'react';
-import { Package, ShoppingCart, Users, Truck, TrendingUp, BarChart4 } from 'lucide-react';
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-
+import { BarChart3, Boxes, CircleDollarSign, PackageOpen, TrendingUp, Clock } from 'lucide-react';
 import DashboardCard from '../components/dashboard/DashboardCard';
 import StatCard from '../components/dashboard/StatCard';
 import RecentActivity from '../components/dashboard/RecentActivity';
 
-// Mock data for chart
-const salesData = [
-  { name: 'Jan', value: 1200 },
-  { name: 'Feb', value: 1900 },
-  { name: 'Mar', value: 800 },
-  { name: 'Apr', value: 1600 },
-  { name: 'May', value: 2000 },
-  { name: 'Jun', value: 2400 },
-  { name: 'Jul', value: 2100 },
+// Mock data for the dashboard
+const statsData = [
+  {
+    title: 'Total Products',
+    value: '1,243',
+    change: '+12%',
+    trend: 'up',
+    icon: Boxes,
+    description: 'Total products in inventory'
+  },
+  {
+    title: 'Total Sales',
+    value: '$45,231',
+    change: '+8%',
+    trend: 'up',
+    icon: CircleDollarSign,
+    description: 'Revenue from all sales'
+  },
+  {
+    title: 'Low Stock',
+    value: '13',
+    change: '-2',
+    trend: 'down',
+    icon: PackageOpen,
+    description: 'Items with low inventory'
+  },
+  {
+    title: 'Avg. Order Value',
+    value: '$239',
+    change: '+5%',
+    trend: 'up',
+    icon: TrendingUp,
+    description: 'Average value per order'
+  },
 ];
 
-const inventoryData = [
-  { name: 'Phones', value: 120 },
-  { name: 'Laptops', value: 85 },
-  { name: 'Tablets', value: 60 },
-  { name: 'Accessories', value: 250 },
-  { name: 'Wearables', value: 75 },
+const chartData = [
+  { name: 'Jan', sales: 4000, purchases: 2400 },
+  { name: 'Feb', sales: 3000, purchases: 1398 },
+  { name: 'Mar', sales: 2000, purchases: 9800 },
+  { name: 'Apr', sales: 2780, purchases: 3908 },
+  { name: 'May', sales: 1890, purchases: 4800 },
+  { name: 'Jun', sales: 2390, purchases: 3800 },
+  { name: 'Jul', sales: 3490, purchases: 4300 },
+];
+
+const recentActivities = [
+  {
+    id: 1,
+    type: 'order',
+    title: 'New order #ORD-12345',
+    description: 'John Smith ordered 3 items',
+    time: '12 minutes ago',
+  },
+  {
+    id: 2,
+    type: 'stock',
+    title: 'Low stock alert',
+    description: 'iPhone 13 Pro (5 items remaining)',
+    time: '45 minutes ago',
+  },
+  {
+    id: 3,
+    type: 'return',
+    title: 'Return processed',
+    description: 'Return #RTN-7890 processed successfully',
+    time: '2 hours ago',
+  },
+  {
+    id: 4,
+    type: 'order',
+    title: 'New order #ORD-12346',
+    description: 'Emma Johnson ordered 1 item',
+    time: '3 hours ago',
+  },
+  {
+    id: 5,
+    type: 'stock',
+    title: 'Restock completed',
+    description: 'Samsung Galaxy S22 (20 units added)',
+    time: '5 hours ago',
+  },
 ];
 
 const Index = () => {
@@ -31,157 +94,152 @@ const Index = () => {
     <div className="animate-fade-in">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome to your inventory management dashboard.</p>
+        <p className="text-muted-foreground">Welcome to your inventory management system.</p>
       </div>
-      
-      <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Products"
-          value="1,254"
-          change="12%"
-          isPositive={true}
-          icon={Package}
-          iconColor="bg-blue-100"
-        />
-        <StatCard
-          title="Recent Orders"
-          value="145"
-          change="8%"
-          isPositive={true}
-          icon={ShoppingCart}
-          iconColor="bg-green-100"
-        />
-        <StatCard
-          title="Customers"
-          value="3,456"
-          change="5%"
-          isPositive={true}
-          icon={Users}
-          iconColor="bg-purple-100"
-        />
-        <StatCard
-          title="Suppliers"
-          value="72"
-          change="0%"
-          isPositive={false}
-          icon={Truck}
-          iconColor="bg-amber-100"
-        />
+
+      {/* Stats Section */}
+      <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {statsData.map((stat, index) => (
+          <StatCard 
+            key={index}
+            title={stat.title}
+            value={stat.value}
+            change={stat.change}
+            trend={stat.trend}
+            description={stat.description}
+            icon={<stat.icon className="h-5 w-5" />}
+          />
+        ))}
       </div>
-      
-      <div className="mt-8 grid gap-6 md:grid-cols-2">
-        <DashboardCard title="Sales Overview" className="md:col-span-1 lg:col-span-1">
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={salesData}
-                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis 
-                  dataKey="name" 
-                  tick={{ fontSize: 12 }} 
-                  tickLine={false}
-                  axisLine={{ stroke: '#e5e7eb' }}
-                />
-                <YAxis 
-                  tick={{ fontSize: 12 }} 
-                  tickLine={false}
-                  axisLine={{ stroke: '#e5e7eb' }}
-                  tickFormatter={value => `$${value}`}
-                />
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                <Tooltip
-                  contentStyle={{ 
-                    borderRadius: '8px', 
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                    border: '1px solid #e5e7eb'
-                  }}
-                  formatter={(value) => [`$${value}`, 'Sales']}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#4f46e5" 
-                  fillOpacity={1} 
-                  fill="url(#colorValue)" 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </DashboardCard>
-        
-        <DashboardCard title="Inventory by Category" className="md:col-span-1 lg:col-span-1">
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart4 className="w-full h-full text-muted-foreground/50" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-sm text-muted-foreground">Chart will be available soon</p>
+
+      {/* Main Content Grid */}
+      <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {/* Sales Overview */}
+        <DashboardCard title="Sales Overview" className="lg:col-span-2">
+          <div className="h-[300px] w-full">
+            {/* This is where a sales chart would go */}
+            <div className="flex h-full items-center justify-center rounded-md border border-dashed">
+              <div className="flex flex-col items-center gap-2 text-center">
+                <BarChart3 className="h-10 w-10 text-muted-foreground" />
+                <h3 className="text-lg font-medium">Sales Analytics</h3>
+                <p className="text-sm text-muted-foreground px-8">
+                  Sales and purchases data visualization would render here
+                </p>
               </div>
-            </ResponsiveContainer>
+            </div>
           </div>
         </DashboardCard>
-      </div>
-      
-      <div className="mt-8 grid gap-6 md:grid-cols-3">
-        <DashboardCard title="Recent Activity" className="md:col-span-2">
-          <RecentActivity />
+
+        {/* Recent Activity */}
+        <DashboardCard title="Recent Activity">
+          <RecentActivity activities={recentActivities} />
         </DashboardCard>
-        
-        <DashboardCard title="Low Stock Items" className="md:col-span-1">
+
+        {/* Inventory Status */}
+        <DashboardCard title="Inventory Status">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="h-10 w-10 rounded bg-blue-100 flex items-center justify-center">
-                  <Package className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">iPhone 13 Pro</p>
-                  <p className="text-xs text-muted-foreground">128GB - Pacific Blue</p>
-                </div>
+                <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                <span className="text-sm">In Stock (85%)</span>
               </div>
-              <div className="flex items-center gap-1">
-                <TrendingUp className="h-4 w-4 text-red-500" />
-                <span className="text-sm font-medium text-red-500">3 left</span>
-              </div>
+              <span className="text-sm font-medium">1,054 items</span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-secondary">
+              <div className="h-2 w-[85%] rounded-full bg-green-500"></div>
             </div>
             
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="h-10 w-10 rounded bg-green-100 flex items-center justify-center">
-                  <Package className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Samsung Galaxy S22</p>
-                  <p className="text-xs text-muted-foreground">256GB - Phantom Black</p>
-                </div>
+                <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+                <span className="text-sm">Low Stock (10%)</span>
               </div>
-              <div className="flex items-center gap-1">
-                <TrendingUp className="h-4 w-4 text-red-500" />
-                <span className="text-sm font-medium text-red-500">5 left</span>
-              </div>
+              <span className="text-sm font-medium">124 items</span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-secondary">
+              <div className="h-2 w-[10%] rounded-full bg-amber-500"></div>
             </div>
             
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="h-10 w-10 rounded bg-purple-100 flex items-center justify-center">
-                  <Package className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">MacBook Pro</p>
-                  <p className="text-xs text-muted-foreground">M1 - 16GB - 512GB</p>
-                </div>
+                <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                <span className="text-sm">Out of Stock (5%)</span>
               </div>
-              <div className="flex items-center gap-1">
-                <TrendingUp className="h-4 w-4 text-red-500" />
-                <span className="text-sm font-medium text-red-500">2 left</span>
-              </div>
+              <span className="text-sm font-medium">65 items</span>
             </div>
+            <div className="h-2 w-full rounded-full bg-secondary">
+              <div className="h-2 w-[5%] rounded-full bg-red-500"></div>
+            </div>
+          </div>
+        </DashboardCard>
+
+        {/* Pending Tasks */}
+        <DashboardCard title="Pending Tasks">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Orders to Process</span>
+              </div>
+              <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
+                12
+              </span>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Items to Restock</span>
+              </div>
+              <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
+                8
+              </span>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Returns to Process</span>
+              </div>
+              <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
+                3
+              </span>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Deliveries to Confirm</span>
+              </div>
+              <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
+                5
+              </span>
+            </div>
+          </div>
+        </DashboardCard>
+
+        {/* Quick Actions */}
+        <DashboardCard title="Quick Actions">
+          <div className="grid grid-cols-2 gap-4">
+            <button className="flex flex-col items-center justify-center rounded-md border border-border p-4 hover:bg-accent transition-colors">
+              <PackageOpen className="mb-2 h-6 w-6 text-primary" />
+              <span className="text-sm font-medium">New Product</span>
+            </button>
+            
+            <button className="flex flex-col items-center justify-center rounded-md border border-border p-4 hover:bg-accent transition-colors">
+              <CircleDollarSign className="mb-2 h-6 w-6 text-primary" />
+              <span className="text-sm font-medium">New Order</span>
+            </button>
+            
+            <button className="flex flex-col items-center justify-center rounded-md border border-border p-4 hover:bg-accent transition-colors">
+              <Boxes className="mb-2 h-6 w-6 text-primary" />
+              <span className="text-sm font-medium">Manage Stock</span>
+            </button>
+            
+            <button className="flex flex-col items-center justify-center rounded-md border border-border p-4 hover:bg-accent transition-colors">
+              <TrendingUp className="mb-2 h-6 w-6 text-primary" />
+              <span className="text-sm font-medium">View Reports</span>
+            </button>
           </div>
         </DashboardCard>
       </div>

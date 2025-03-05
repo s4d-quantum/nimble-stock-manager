@@ -11,7 +11,8 @@ import {
   Settings,
   X,
   Layers,
-  Clipboard
+  ArrowDownToLine,
+  ArrowUpFromLine
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -21,11 +22,12 @@ interface SidebarProps {
 
 const menuItems = [
   { name: 'Dashboard', icon: Home, path: '/' },
-  { name: 'Products', icon: Package, path: '/products' },
-  { name: 'Orders', icon: ShoppingCart, path: '/orders' },
+  { name: 'Inventory', icon: Package, path: '/products' },
+  { name: 'Sales Orders', icon: ShoppingCart, path: '/orders' },
   { name: 'Customers', icon: Users, path: '/customers' },
   { name: 'Suppliers', icon: Truck, path: '/suppliers' },
-  { name: 'Purchases', icon: Clipboard, path: '/purchases' },
+  { name: 'Goods In', icon: ArrowDownToLine, path: '/goods-in' },
+  { name: 'Goods Out', icon: ArrowUpFromLine, path: '/goods-out' },
   { name: 'QC & Repairs', icon: Layers, path: '/quality-control' },
   { name: 'Reports', icon: BarChart4, path: '/reports' },
   { name: 'Settings', icon: Settings, path: '/settings' },
