@@ -105,9 +105,9 @@ const Index = () => {
             title={stat.title}
             value={stat.value}
             change={stat.change}
-            trend={stat.trend}
+            trend={stat.trend === 'up'}
+            icon={stat.icon}
             description={stat.description}
-            icon={<stat.icon className="h-5 w-5" />}
           />
         ))}
       </div>
@@ -132,7 +132,7 @@ const Index = () => {
 
         {/* Recent Activity */}
         <DashboardCard title="Recent Activity">
-          <RecentActivity activities={recentActivities} />
+          <RecentActivity />
         </DashboardCard>
 
         {/* Inventory Status */}

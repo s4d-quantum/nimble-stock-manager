@@ -2,7 +2,20 @@
 import React from 'react';
 import { Package, ShoppingCart, Users, Clock } from 'lucide-react';
 
-const activities = [
+interface Activity {
+  id: number;
+  type: string;
+  title: string;
+  description: string;
+  time: string;
+  icon?: React.ElementType;
+}
+
+interface RecentActivityProps {
+  activities?: Activity[];
+}
+
+const defaultActivities = [
   {
     id: 1,
     type: 'product',
@@ -53,18 +66,27 @@ const getIconBg = (type: string) => {
       return 'bg-green-100 text-green-600';
     case 'customer':
       return 'bg-purple-100 text-purple-600';
+    case 'stock':
+      return 'bg-amber-100 text-amber-600';
+    case 'return':
+      return 'bg-red-100 text-red-600';
     default:
       return 'bg-gray-100 text-gray-600';
   }
 };
 
-const RecentActivity: React.FC = () => {
+const RecentActivity: React.FC<RecentActivityProps> = ({ activities = defaultActivities }) => {
   return (
     <div className="space-y-6">
       {activities.map((activity) => (
         <div key={activity.id} className="flex items-start gap-4 group animate-fade-in" style={{ animationDelay: `${activity.id * 100}ms` }}>
           <div className={`mt-1 rounded-full p-2 ${getIconBg(activity.type)}`}>
-            <activity.icon className="h-4 w-4" />
+            {activity.icon ? <activity.icon className="h-4 w-4" /> : 
+              activity.type === 'stock' ? <Package className="h-4 w-4" /> :
+              activity.type === 'order' ? <ShoppingCart className="h-4 w-4" /> :
+              activity.type === 'return' ? <ShoppingCart className="h-4 w-4" /> :
+              <Package className="h-4 w-4" />
+            }
           </div>
           
           <div className="flex-1 space-y-1">

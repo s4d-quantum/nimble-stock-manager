@@ -6,7 +6,8 @@ interface StatCardProps {
   title: string;
   value: string | number;
   change?: string;
-  isPositive?: boolean;
+  trend?: boolean;
+  description?: string;
   icon: LucideIcon;
   iconColor?: string;
 }
@@ -15,7 +16,8 @@ const StatCard: React.FC<StatCardProps> = ({
   title, 
   value, 
   change, 
-  isPositive = true,
+  trend = true,
+  description,
   icon: Icon,
   iconColor = 'bg-primary/10'
 }) => {
@@ -27,9 +29,13 @@ const StatCard: React.FC<StatCardProps> = ({
           <h3 className="text-2xl font-bold mt-1">{value}</h3>
           
           {change && (
-            <p className={`text-xs font-medium mt-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-              {isPositive ? '↑' : '↓'} {change} from last month
+            <p className={`text-xs font-medium mt-1 ${trend ? 'text-green-500' : 'text-red-500'}`}>
+              {trend ? '↑' : '↓'} {change} from last month
             </p>
+          )}
+          
+          {description && (
+            <p className="text-xs text-muted-foreground mt-1">{description}</p>
           )}
         </div>
         
