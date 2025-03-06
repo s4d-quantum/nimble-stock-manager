@@ -2,19 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Package, 
-  Plus, 
   Search, 
   Filter, 
   ArrowUpDown,
   MoreHorizontal,
   Edit,
-  Trash,
   FileDown,
   RefreshCw
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { CellularDevice, Supplier, ProductGrade, DeviceWithDetails } from '@/types/inventory';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 const statusColors = {
   'in_stock': 'bg-green-100 text-green-800',
@@ -27,6 +26,7 @@ const statusColors = {
 
 const Products = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [devices, setDevices] = useState<DeviceWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -152,6 +152,11 @@ const Products = () => {
     }
   };
 
+  // Handle clicking the edit button for a device
+  const handleEditDevice = (deviceId: string) => {
+    navigate(`/device/${deviceId}`);
+  };
+
   // Apply filters to the devices
   const filteredDevices = devices.filter(device => {
     // Search term filter
@@ -244,11 +249,6 @@ const Products = () => {
             <FileDown className="h-4 w-4 mr-2" />
             Export
           </button>
-          
-          <button className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Device
-          </button>
         </div>
       </div>
       
@@ -306,11 +306,11 @@ const Products = () => {
                     </td>
                     <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border hover:bg-accent hover:text-accent-foreground">
+                        <button 
+                          onClick={() => handleEditDevice(device.id)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border hover:bg-accent hover:text-accent-foreground"
+                        >
                           <Edit className="h-4 w-4" />
-                        </button>
-                        <button className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border hover:bg-accent hover:text-accent-foreground">
-                          <Trash className="h-4 w-4" />
                         </button>
                         <button className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border hover:bg-accent hover:text-accent-foreground">
                           <MoreHorizontal className="h-4 w-4" />
