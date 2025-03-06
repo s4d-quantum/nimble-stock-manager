@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Package, 
@@ -22,6 +21,8 @@ const statusColors = {
   'returned': 'bg-purple-100 text-purple-800',
   'repair': 'bg-yellow-100 text-yellow-800',
   'qc_required': 'bg-red-100 text-red-800',
+  'quarantine': 'bg-orange-100 text-orange-800',
+  'qc_failed': 'bg-red-500 text-white',
 };
 
 const Products = () => {
@@ -34,17 +35,14 @@ const Products = () => {
   const [grades, setGrades] = useState<ProductGrade[]>([]);
   const [manufacturers, setManufacturers] = useState<string[]>([]);
   
-  // Filter states
   const [supplierFilter, setSupplierFilter] = useState<string>('');
   const [manufacturerFilter, setManufacturerFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
 
-  // Load all required data
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Get suppliers
         const { data: supplierData, error: supplierError } = await supabase
           .from('suppliers')
           .select('id, name, supplier_code');
@@ -52,7 +50,6 @@ const Products = () => {
         if (supplierError) throw supplierError;
         setSuppliers(supplierData);
         
-        // Get product grades
         const { data: gradeData, error: gradeError } = await supabase
           .from('product_grades')
           .select('id, grade, description');
@@ -60,14 +57,12 @@ const Products = () => {
         if (gradeError) throw gradeError;
         setGrades(gradeData);
 
-        // Get unique manufacturers from tac_codes
         const { data: manufacturerData, error: manufacturerError } = await supabase
           .from('tac_codes')
           .select('manufacturer')
           .order('manufacturer');
         
         if (manufacturerError) throw manufacturerError;
-        // Get unique manufacturers
         const uniqueManufacturers = Array.from(new Set(manufacturerData.map(item => item.manufacturer)));
         setManufacturers(uniqueManufacturers);
 
@@ -91,7 +86,6 @@ const Products = () => {
   const fetchDevices = async () => {
     try {
       setLoading(true);
-      // Get cellular devices
       const { data: deviceData, error: deviceError } = await supabase
         .from('cellular_devices')
         .select(`
@@ -107,23 +101,19 @@ const Products = () => {
       
       if (deviceError) throw deviceError;
 
-      // Enrich the device data with related information
       const enrichedDevices = await Promise.all(deviceData.map(async (device) => {
         const enrichedDevice: DeviceWithDetails = { ...device };
         
-        // Add supplier name if supplier_id exists
         if (device.supplier_id) {
           const supplier = suppliers.find(s => s.id === device.supplier_id);
           enrichedDevice.supplier_name = supplier?.name || '';
         }
         
-        // Add grade if grade_id exists
         if (device.grade_id !== null && device.grade_id !== undefined) {
           const grade = grades.find(g => g.id === device.grade_id);
           enrichedDevice.grade = grade?.grade || '';
         }
         
-        // Get manufacturer and model from TAC code (first 8 digits of IMEI)
         if (device.imei) {
           const tacCode = device.imei.substring(0, 8);
           const { data: tacData, error: tacError } = await supabase.rpc('get_device_details_by_tac', {
@@ -152,26 +142,20 @@ const Products = () => {
     }
   };
 
-  // Handle clicking the edit button for a device
   const handleEditDevice = (deviceId: string) => {
     navigate(`/device/${deviceId}`);
   };
 
-  // Apply filters to the devices
   const filteredDevices = devices.filter(device => {
-    // Search term filter
     const matchesSearch = 
       device.imei?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       device.manufacturer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       device.model_name?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Supplier filter
     const matchesSupplier = supplierFilter ? device.supplier_id === supplierFilter : true;
     
-    // Manufacturer filter
     const matchesManufacturer = manufacturerFilter ? device.manufacturer === manufacturerFilter : true;
     
-    // Status filter
     const matchesStatus = statusFilter ? device.status === statusFilter : true;
     
     return matchesSearch && matchesSupplier && matchesManufacturer && matchesStatus;
@@ -199,7 +183,6 @@ const Products = () => {
         </div>
         
         <div className="flex flex-wrap items-center gap-2">
-          {/* Supplier Filter */}
           <select
             className="rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             value={supplierFilter}
@@ -211,7 +194,6 @@ const Products = () => {
             ))}
           </select>
           
-          {/* Manufacturer Filter */}
           <select
             className="rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             value={manufacturerFilter}
@@ -223,7 +205,6 @@ const Products = () => {
             ))}
           </select>
           
-          {/* Status Filter */}
           <select
             className="rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             value={statusFilter}
@@ -235,6 +216,8 @@ const Products = () => {
             <option value="returned">Returned</option>
             <option value="repair">Repair</option>
             <option value="qc_required">QC Required</option>
+            <option value="quarantine">Quarantine</option>
+            <option value="qc_failed">QC Failed</option>
           </select>
 
           <button 

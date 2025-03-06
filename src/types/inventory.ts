@@ -4,7 +4,7 @@ export interface CellularDevice {
   imei: string;
   storage_gb?: number | null;
   color?: string | null;
-  status: 'in_stock' | 'sold' | 'returned' | 'repair' | 'qc_required';
+  status: 'in_stock' | 'sold' | 'returned' | 'repair' | 'qc_required' | 'quarantine' | 'qc_failed';
   grade_id?: number | null;
   supplier_id?: string | null;
   tac_id?: string | null;
