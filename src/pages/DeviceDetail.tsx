@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -237,7 +236,7 @@ const DeviceDetail = () => {
     setSaving(true);
     try {
       const updates = {
-        status,
+        status: status as "in_stock" | "sold" | "returned" | "repair" | "qc_required" | "quarantine" | "qc_failed",
         grade_id: gradeId,
         supplier_id: supplierId,
         color,

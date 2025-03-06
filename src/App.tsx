@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
@@ -13,12 +13,17 @@ import './App.css';
 import { Toaster } from "@/components/ui/toaster";
 
 const App: React.FC = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const closeSidebar = () => setSidebarOpen(false);
+
   return (
     <Router>
       <div className="relative flex min-h-screen flex-col">
-        <Navbar />
+        <Navbar toggleSidebar={toggleSidebar} />
         <div className="flex flex-1 pt-16">
-          <Sidebar />
+          <Sidebar isOpen={sidebarOpen} closeSidebar={closeSidebar} />
           <main className="flex-1 p-4 md:p-6 overflow-y-auto">
             <Routes>
               <Route path="/" element={<Index />} />
