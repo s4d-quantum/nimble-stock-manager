@@ -1349,6 +1349,16 @@ export type Database = {
           model_name: string
         }[]
       }
+      get_device_details_by_tac: {
+        Args: {
+          tac_code: string
+        }
+        Returns: {
+          manufacturer: string
+          model_name: string
+          model_no: string
+        }[]
+      }
       test_get_cellular_device_details: {
         Args: {
           test_id: string

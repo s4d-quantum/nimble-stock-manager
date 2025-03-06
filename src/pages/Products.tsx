@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Package, 
   Plus, 
@@ -9,64 +9,237 @@ import {
   MoreHorizontal,
   Edit,
   Trash,
-  FileDown
+  FileDown,
+  RefreshCw
 } from 'lucide-react';
-
-const mockProducts = [
-  { id: 1, name: 'iPhone 13 Pro', category: 'Phones', sku: 'IP-13P-128', stock: 25, price: 999.99, status: 'In Stock' },
-  { id: 2, name: 'Samsung Galaxy S22', category: 'Phones', sku: 'SG-S22-256', stock: 5, price: 899.99, status: 'Low Stock' },
-  { id: 3, name: 'MacBook Pro M1', category: 'Laptops', sku: 'MB-M1-16-512', stock: 12, price: 1999.99, status: 'In Stock' },
-  { id: 4, name: 'iPad Air', category: 'Tablets', sku: 'IP-AIR-64', stock: 18, price: 599.99, status: 'In Stock' },
-  { id: 5, name: 'AirPods Pro', category: 'Accessories', sku: 'AP-PRO-2', stock: 32, price: 249.99, status: 'In Stock' },
-  { id: 6, name: 'Apple Watch Series 7', category: 'Wearables', sku: 'AW-S7-45', stock: 0, price: 399.99, status: 'Out of Stock' },
-  { id: 7, name: 'Google Pixel 6', category: 'Phones', sku: 'GP-6-128', stock: 7, price: 749.99, status: 'In Stock' },
-  { id: 8, name: 'Dell XPS 13', category: 'Laptops', sku: 'DL-XPS13-512', stock: 4, price: 1499.99, status: 'Low Stock' },
-  { id: 9, name: 'Samsung Tab S8', category: 'Tablets', sku: 'ST-S8-256', stock: 9, price: 849.99, status: 'In Stock' },
-  { id: 10, name: 'Bose QC45', category: 'Accessories', sku: 'BQC-45', stock: 0, price: 329.99, status: 'Out of Stock' },
-];
+import { supabase } from '@/integrations/supabase/client';
+import { CellularDevice, Supplier, ProductGrade, DeviceWithDetails } from '@/types/inventory';
+import { useToast } from '@/hooks/use-toast';
 
 const statusColors = {
-  'In Stock': 'bg-green-100 text-green-800',
-  'Low Stock': 'bg-amber-100 text-amber-800',
-  'Out of Stock': 'bg-red-100 text-red-800',
+  'in_stock': 'bg-green-100 text-green-800',
+  'low_stock': 'bg-amber-100 text-amber-800',
+  'sold': 'bg-blue-100 text-blue-800',
+  'returned': 'bg-purple-100 text-purple-800',
+  'repair': 'bg-yellow-100 text-yellow-800',
+  'qc_required': 'bg-red-100 text-red-800',
 };
 
 const Products = () => {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const [devices, setDevices] = useState<DeviceWithDetails[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [grades, setGrades] = useState<ProductGrade[]>([]);
+  const [manufacturers, setManufacturers] = useState<string[]>([]);
+  
+  // Filter states
+  const [supplierFilter, setSupplierFilter] = useState<string>('');
+  const [manufacturerFilter, setManufacturerFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
 
-  const filteredProducts = mockProducts.filter(product => 
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Load all required data
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Get suppliers
+        const { data: supplierData, error: supplierError } = await supabase
+          .from('suppliers')
+          .select('id, name, supplier_code');
+        
+        if (supplierError) throw supplierError;
+        setSuppliers(supplierData);
+        
+        // Get product grades
+        const { data: gradeData, error: gradeError } = await supabase
+          .from('product_grades')
+          .select('id, grade, description');
+        
+        if (gradeError) throw gradeError;
+        setGrades(gradeData);
+
+        // Get unique manufacturers from tac_codes
+        const { data: manufacturerData, error: manufacturerError } = await supabase
+          .from('tac_codes')
+          .select('manufacturer')
+          .order('manufacturer');
+        
+        if (manufacturerError) throw manufacturerError;
+        // Get unique manufacturers
+        const uniqueManufacturers = Array.from(new Set(manufacturerData.map(item => item.manufacturer)));
+        setManufacturers(uniqueManufacturers);
+
+        await fetchDevices();
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load inventory data',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const fetchDevices = async () => {
+    try {
+      setLoading(true);
+      // Get cellular devices
+      const { data: deviceData, error: deviceError } = await supabase
+        .from('cellular_devices')
+        .select(`
+          id, 
+          imei, 
+          storage_gb, 
+          color, 
+          status, 
+          grade_id, 
+          supplier_id, 
+          tac_id
+        `);
+      
+      if (deviceError) throw deviceError;
+
+      // Enrich the device data with related information
+      const enrichedDevices = await Promise.all(deviceData.map(async (device) => {
+        const enrichedDevice: DeviceWithDetails = { ...device };
+        
+        // Add supplier name if supplier_id exists
+        if (device.supplier_id) {
+          const supplier = suppliers.find(s => s.id === device.supplier_id);
+          enrichedDevice.supplier_name = supplier?.name || '';
+        }
+        
+        // Add grade if grade_id exists
+        if (device.grade_id !== null && device.grade_id !== undefined) {
+          const grade = grades.find(g => g.id === device.grade_id);
+          enrichedDevice.grade = grade?.grade || '';
+        }
+        
+        // Get manufacturer and model from TAC code (first 8 digits of IMEI)
+        if (device.imei) {
+          const tacCode = device.imei.substring(0, 8);
+          const { data: tacData, error: tacError } = await supabase.rpc('get_device_details_by_tac', {
+            tac_code: tacCode
+          });
+          
+          if (!tacError && tacData && tacData.length > 0) {
+            enrichedDevice.manufacturer = tacData[0].manufacturer;
+            enrichedDevice.model_name = tacData[0].model_name;
+          }
+        }
+        
+        return enrichedDevice;
+      }));
+      
+      setDevices(enrichedDevices);
+    } catch (error) {
+      console.error('Error fetching devices:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load device data',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Apply filters to the devices
+  const filteredDevices = devices.filter(device => {
+    // Search term filter
+    const matchesSearch = 
+      device.imei?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      device.manufacturer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      device.model_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Supplier filter
+    const matchesSupplier = supplierFilter ? device.supplier_id === supplierFilter : true;
+    
+    // Manufacturer filter
+    const matchesManufacturer = manufacturerFilter ? device.manufacturer === manufacturerFilter : true;
+    
+    // Status filter
+    const matchesStatus = statusFilter ? device.status === statusFilter : true;
+    
+    return matchesSearch && matchesSupplier && matchesManufacturer && matchesStatus;
+  });
 
   return (
     <div className="animate-fade-in">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-bold tracking-tight">Inventory</h1>
-        <p className="text-muted-foreground">Manage your product inventory.</p>
+        <p className="text-muted-foreground">Manage your device inventory.</p>
       </div>
       
-      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-6 flex flex-wrap gap-4">
         <div className="flex w-full items-center gap-2 sm:max-w-sm">
           <div className="relative w-full">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <input
               type="search"
-              placeholder="Search products..."
+              placeholder="Search by IMEI, manufacturer, model..."
               className="w-full rounded-md border border-input pl-8 pr-4 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
-          <button className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </button>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Supplier Filter */}
+          <select
+            className="rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            value={supplierFilter}
+            onChange={(e) => setSupplierFilter(e.target.value)}
+          >
+            <option value="">All Suppliers</option>
+            {suppliers.map(supplier => (
+              <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
+            ))}
+          </select>
+          
+          {/* Manufacturer Filter */}
+          <select
+            className="rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            value={manufacturerFilter}
+            onChange={(e) => setManufacturerFilter(e.target.value)}
+          >
+            <option value="">All Manufacturers</option>
+            {manufacturers.map(manufacturer => (
+              <option key={manufacturer} value={manufacturer}>{manufacturer}</option>
+            ))}
+          </select>
+          
+          {/* Status Filter */}
+          <select
+            className="rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">All Statuses</option>
+            <option value="in_stock">In Stock</option>
+            <option value="sold">Sold</option>
+            <option value="returned">Returned</option>
+            <option value="repair">Repair</option>
+            <option value="qc_required">QC Required</option>
+          </select>
+
+          <button 
+            onClick={() => fetchDevices()} 
+            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </button>
+          
           <button className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
             <FileDown className="h-4 w-4 mr-2" />
             Export
@@ -74,7 +247,7 @@ const Products = () => {
           
           <button className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
             <Plus className="h-4 w-4 mr-2" />
-            Add Product
+            Add Device
           </button>
         </div>
       </div>
@@ -84,82 +257,76 @@ const Products = () => {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                <th className="py-3 px-4 text-left font-medium">
-                  <div className="flex items-center gap-1">
-                    Product
-                    <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </th>
-                <th className="py-3 px-4 text-left font-medium">
-                  <div className="flex items-center gap-1">
-                    Category
-                    <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </th>
-                <th className="py-3 px-4 text-left font-medium">SKU</th>
-                <th className="py-3 px-4 text-right font-medium">
-                  <div className="flex items-center justify-end gap-1">
-                    Stock
-                    <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </th>
-                <th className="py-3 px-4 text-right font-medium">
-                  <div className="flex items-center justify-end gap-1">
-                    Price
-                    <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </th>
+                <th className="py-3 px-4 text-left font-medium">IMEI</th>
+                <th className="py-3 px-4 text-left font-medium">Manufacturer</th>
+                <th className="py-3 px-4 text-left font-medium">Model</th>
+                <th className="py-3 px-4 text-left font-medium">Storage (GB)</th>
+                <th className="py-3 px-4 text-left font-medium">Colour</th>
+                <th className="py-3 px-4 text-left font-medium">Grade</th>
+                <th className="py-3 px-4 text-left font-medium">Supplier</th>
                 <th className="py-3 px-4 text-center font-medium">Status</th>
                 <th className="py-3 px-4 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredProducts.map((product) => (
-                <tr 
-                  key={product.id} 
-                  className="border-b border-border hover:bg-muted/50 transition-colors"
-                >
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded bg-secondary flex items-center justify-center">
-                        <Package className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <span className="font-medium">{product.name}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">{product.category}</td>
-                  <td className="py-3 px-4 font-mono text-xs">{product.sku}</td>
-                  <td className="py-3 px-4 text-right">{product.stock}</td>
-                  <td className="py-3 px-4 text-right">${product.price.toFixed(2)}</td>
-                  <td className="py-3 px-4">
+              {loading ? (
+                <tr>
+                  <td colSpan={9} className="py-8 text-center">
                     <div className="flex justify-center">
-                      <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusColors[product.status as keyof typeof statusColors]}`}>
-                        {product.status}
-                      </span>
+                      <RefreshCw className="h-6 w-6 animate-spin text-primary" />
                     </div>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border hover:bg-accent hover:text-accent-foreground">
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border hover:bg-accent hover:text-accent-foreground">
-                        <Trash className="h-4 w-4" />
-                      </button>
-                      <button className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border hover:bg-accent hover:text-accent-foreground">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
-                    </div>
+                    <div className="mt-2 text-sm text-muted-foreground">Loading inventory data...</div>
                   </td>
                 </tr>
-              ))}
+              ) : filteredDevices.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="py-8 text-center">
+                    <div className="text-sm text-muted-foreground">No devices found matching your search criteria.</div>
+                  </td>
+                </tr>
+              ) : (
+                filteredDevices.map((device) => (
+                  <tr 
+                    key={device.id} 
+                    className="border-b border-border hover:bg-muted/50 transition-colors"
+                  >
+                    <td className="py-3 px-4 font-mono text-xs">{device.imei}</td>
+                    <td className="py-3 px-4">{device.manufacturer || 'Unknown'}</td>
+                    <td className="py-3 px-4">{device.model_name || 'Unknown'}</td>
+                    <td className="py-3 px-4">{device.storage_gb || 'N/A'}</td>
+                    <td className="py-3 px-4">{device.color || 'N/A'}</td>
+                    <td className="py-3 px-4">{device.grade || 'N/A'}</td>
+                    <td className="py-3 px-4">{device.supplier_name || 'N/A'}</td>
+                    <td className="py-3 px-4">
+                      <div className="flex justify-center">
+                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusColors[device.status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'}`}>
+                          {device.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border hover:bg-accent hover:text-accent-foreground">
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border hover:bg-accent hover:text-accent-foreground">
+                          <Trash className="h-4 w-4" />
+                        </button>
+                        <button className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border hover:bg-accent hover:text-accent-foreground">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
         
         <div className="flex items-center justify-between border-t border-border p-4">
           <div className="text-sm text-muted-foreground">
-            Showing <strong>1-{filteredProducts.length}</strong> of <strong>{mockProducts.length}</strong> products
+            Showing <strong>1-{filteredDevices.length}</strong> of <strong>{devices.length}</strong> devices
           </div>
           
           <div className="flex items-center gap-2">
