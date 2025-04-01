@@ -57,7 +57,7 @@ export interface SalesOrder {
   customer: Customer;
   customer_id: string;
   order_date: string;
-  status: 'draft' | 'pending' | 'processing' | 'complete' | 'cancelled';
+  status: 'draft' | 'pending' | 'processing' | 'complete' | 'cancelled' | 'confirmed';
   tracking_number?: string;
   shipping_carrier?: string;
   total_boxes?: number;
@@ -66,4 +66,6 @@ export interface SalesOrder {
   created_at: string;
   updated_at: string;
   device_count?: number;
+  created_by?: string;
+  updated_by?: string;
 }

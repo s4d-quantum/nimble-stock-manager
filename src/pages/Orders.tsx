@@ -79,10 +79,12 @@ const Orders = () => {
 
       if (error) throw error;
 
+      // Type fix: Cast the data to match our SalesOrder type
       const ordersWithCount = data?.map(order => ({
         ...order,
-        device_count: order.device_count?.[0]?.count || 0
-      })) || [];
+        device_count: order.device_count?.[0]?.count || 0,
+        status: order.status as SalesOrder['status'] // Cast status to the correct type
+      })) as SalesOrder[] || [];
 
       setOrders(ordersWithCount);
     } catch (error) {

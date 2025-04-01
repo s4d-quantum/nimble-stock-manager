@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Customer } from '@/types/inventory';
+import { Plus, Loader2 } from 'lucide-react';
 import { 
   Dialog,
   DialogContent,
@@ -23,6 +24,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import CreateCustomerModal from './CreateCustomerModal';
 
 interface CreateSalesOrderProps {
   isOpen: boolean;
@@ -37,18 +39,22 @@ const CreateSalesOrder: React.FC<CreateSalesOrderProps> = ({
 }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [customerId, setCustomerId] = useState('');
-  const [orderNumber, setOrderNumber] = useState('');
   const [orderDate, setOrderDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchCustomers();
-  }, []);
+    if (isOpen) {
+      fetchCustomers();
+    }
+  }, [isOpen]);
 
   const fetchCustomers = async () => {
+    setLoadingCustomers(true);
     try {
       const { data, error } = await supabase
         .from('customers')
@@ -64,12 +70,18 @@ const CreateSalesOrder: React.FC<CreateSalesOrderProps> = ({
         description: "Failed to load customers",
         variant: "destructive"
       });
+    } finally {
+      setLoadingCustomers(false);
     }
+  };
+
+  const handleCreateCustomer = () => {
+    setIsCustomerModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerId || !orderNumber || !orderDate) {
+    if (!customerId || !orderDate) {
       toast({
         title: "Validation Error",
         description: "Please fill all required fields",
@@ -80,6 +92,24 @@ const CreateSalesOrder: React.FC<CreateSalesOrderProps> = ({
 
     setLoading(true);
     try {
+      // Get the last SO number
+      const { data: lastOrder } = await supabase
+        .from('sales_orders')
+        .select('order_number')
+        .order('order_number', { ascending: false })
+        .limit(1);
+
+      // Generate new SO number
+      let newOrderNumber = 1;
+      if (lastOrder && lastOrder.length > 0) {
+        const lastNumber = parseInt(lastOrder[0].order_number.split('-')[1] || '0');
+        newOrderNumber = lastNumber + 1;
+      }
+      const orderNumber = `SO-${String(newOrderNumber).padStart(6, '0')}`;
+
+      // Use a placeholder user ID since we don't have auth yet
+      const userId = crypto.randomUUID();
+
       const { data, error } = await supabase
         .from('sales_orders')
         .insert({
@@ -87,7 +117,9 @@ const CreateSalesOrder: React.FC<CreateSalesOrderProps> = ({
           order_number: orderNumber,
           order_date: orderDate,
           notes,
-          status: 'draft'
+          status: 'draft',
+          created_by: userId,
+          updated_by: userId
         })
         .select()
         .single();
@@ -119,82 +151,112 @@ const CreateSalesOrder: React.FC<CreateSalesOrderProps> = ({
     }
   };
 
+  const resetForm = () => {
+    setCustomerId('');
+    setOrderDate(new Date().toISOString().split('T')[0]);
+    setNotes('');
+  };
+
+  const handleCloseDialog = () => {
+    resetForm();
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Create New Sales Order</DialogTitle>
-          <DialogDescription>
-            Enter the details for the new sales order below.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={isOpen} onOpenChange={handleCloseDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Create New Sales Order</DialogTitle>
+            <DialogDescription>
+              Enter the details for the new sales order below.
+            </DialogDescription>
+          </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="grid grid-cols-1 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="orderNumber">Order Number</Label>
-              <Input
-                id="orderNumber"
-                value={orderNumber}
-                onChange={(e) => setOrderNumber(e.target.value)}
-                placeholder="SO-12345"
-                required
-              />
+          <form onSubmit={handleSubmit} className="space-y-4 py-4">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="customer">Customer *</Label>
+                {loadingCustomers ? (
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Loading customers...
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Select value={customerId} onValueChange={setCustomerId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select customer" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {customers.map((customer) => (
+                          <SelectItem key={customer.id} value={customer.id}>
+                            {customer.name} ({customer.customer_code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button 
+                      type="button" 
+                      variant="link" 
+                      className="h-auto p-0 text-blue-600"
+                      onClick={handleCreateCustomer}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add New Customer
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="orderDate">Order Date *</Label>
+                <Input
+                  id="orderDate"
+                  type="date"
+                  value={orderDate}
+                  onChange={(e) => setOrderDate(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Add any notes or special instructions"
+                  rows={3}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="customer">Customer</Label>
-              <Select
-                value={customerId}
-                onValueChange={(value) => setCustomerId(value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select customer" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map((customer) => (
-                    <SelectItem key={customer.id} value={customer.id}>
-                      {customer.name} ({customer.customer_code})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <DialogFooter>
+              <Button variant="outline" type="button" onClick={handleCloseDialog}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading || loadingCustomers}>
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Order'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-            <div className="space-y-2">
-              <Label htmlFor="orderDate">Order Date</Label>
-              <Input
-                id="orderDate"
-                type="date"
-                value={orderDate}
-                onChange={(e) => setOrderDate(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add any notes or special instructions"
-                rows={3}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" type="button" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Creating..." : "Create Order"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <CreateCustomerModal
+        isOpen={isCustomerModalOpen}
+        onClose={() => setIsCustomerModalOpen(false)}
+        onCustomerCreated={fetchCustomers}
+      />
+    </>
   );
 };
 
