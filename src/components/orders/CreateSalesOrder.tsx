@@ -56,16 +56,34 @@ const CreateSalesOrder: React.FC<CreateSalesOrderProps> = ({
   const fetchCustomers = async () => {
     setLoadingCustomers(true);
     try {
-      console.log("Fetching customers...");
+      console.log("Fetching customers from:", supabase.supabaseUrl);
       const { data, error } = await supabase
         .from('customers')
         .select('id, name, customer_code')
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error details:", error);
+        throw error;
+      }
       
       console.log("Customers data:", data);
       setCustomers(data || []);
+      
+      // If we don't have any customers, let's check if the table exists
+      if (!data || data.length === 0) {
+        // Try to get table info
+        const { error: tableError } = await supabase
+          .from('customers')
+          .select('id')
+          .limit(1);
+          
+        if (tableError) {
+          console.error("Table check error:", tableError);
+        } else {
+          console.log("Table exists but no data found");
+        }
+      }
     } catch (error) {
       console.error('Error fetching customers:', error);
       toast({
