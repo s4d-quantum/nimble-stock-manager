@@ -56,12 +56,15 @@ const CreateSalesOrder: React.FC<CreateSalesOrderProps> = ({
   const fetchCustomers = async () => {
     setLoadingCustomers(true);
     try {
+      console.log("Fetching customers...");
       const { data, error } = await supabase
         .from('customers')
         .select('id, name, customer_code')
         .order('name');
 
       if (error) throw error;
+      
+      console.log("Customers data:", data);
       setCustomers(data || []);
     } catch (error) {
       console.error('Error fetching customers:', error);
