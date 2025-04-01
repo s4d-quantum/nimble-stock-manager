@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -77,7 +78,7 @@ const DeviceDetail = () => {
     try {
       const { data, error } = await supabase
         .from('suppliers')
-        .select('id, name');
+        .select('id, name, supplier_code');
 
       if (error) throw error;
       setSuppliers(data || []);
