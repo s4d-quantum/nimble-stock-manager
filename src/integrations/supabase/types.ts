@@ -873,6 +873,7 @@ export type Database = {
           notes: string | null
           order_date: string
           order_number: string
+          priority: number | null
           shipping_carrier: string | null
           status: Database["public"]["Enums"]["order_status"]
           total_boxes: number | null
@@ -889,6 +890,7 @@ export type Database = {
           notes?: string | null
           order_date?: string
           order_number: string
+          priority?: number | null
           shipping_carrier?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_boxes?: number | null
@@ -905,6 +907,7 @@ export type Database = {
           notes?: string | null
           order_date?: string
           order_number?: string
+          priority?: number | null
           shipping_carrier?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_boxes?: number | null
@@ -1096,6 +1099,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      storage_config: {
+        Row: {
+          created_at: string
+          id: number
+          storage_gb: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          storage_gb?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          storage_gb?: number | null
+        }
+        Relationships: []
       }
       storage_locations: {
         Row: {
@@ -1382,6 +1403,7 @@ export type Database = {
         | "confirmed"
         | "complete"
         | "cancelled"
+      Priority: "Lowest" | "Low" | "Medium" | "High" | "Urgent"
       transaction_type:
         | "purchase"
         | "sale"

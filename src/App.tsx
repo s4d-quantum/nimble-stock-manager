@@ -31,6 +31,7 @@ const App: React.FC = () => {
               <Route path="/device/:id" element={<DeviceDetail />} />
               <Route path="/customers" element={<Customers />} />
               <Route path="/orders" element={<Orders />} />
+              <Route path="/sales/:id" element={<DeviceDetail />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
