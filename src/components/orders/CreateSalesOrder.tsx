@@ -56,32 +56,51 @@ const CreateSalesOrder: React.FC<CreateSalesOrderProps> = ({
   const fetchCustomers = async () => {
     setLoadingCustomers(true);
     try {
-      console.log("Fetching customers from:", supabase.supabaseUrl);
+      console.log("Fetching customers...");
+      
+      // Direct approach to test connection
       const { data, error } = await supabase
         .from('customers')
-        .select('id, name, customer_code')
-        .order('name');
-
+        .select('*');
+      
       if (error) {
         console.error("Supabase error details:", error);
         throw error;
       }
       
-      console.log("Customers data:", data);
-      setCustomers(data || []);
+      console.log("Raw customers data:", data);
       
-      // If we don't have any customers, let's check if the table exists
-      if (!data || data.length === 0) {
-        // Try to get table info
+      if (data && data.length > 0) {
+        // Map the data to ensure all fields are properly typed
+        const customerData = data.map(customer => ({
+          id: customer.id,
+          name: customer.name,
+          customer_code: customer.customer_code,
+          email: customer.email,
+          phone: customer.phone,
+          address_line1: customer.address_line1,
+          address_line2: customer.address_line2,
+          city: customer.city,
+          postcode: customer.postcode,
+          country: customer.country,
+          vat_number: customer.vat_number
+        })) as Customer[];
+        
+        console.log("Processed customer data:", customerData);
+        setCustomers(customerData);
+      } else {
+        console.log("No customers found or data is empty", data);
+        setCustomers([]);
+        
+        // Check if table exists
         const { error: tableError } = await supabase
           .from('customers')
-          .select('id')
-          .limit(1);
+          .select('count(*)');
           
         if (tableError) {
           console.error("Table check error:", tableError);
         } else {
-          console.log("Table exists but no data found");
+          console.log("Table exists but returned no data");
         }
       }
     } catch (error) {
@@ -210,11 +229,17 @@ const CreateSalesOrder: React.FC<CreateSalesOrderProps> = ({
                         <SelectValue placeholder="Select customer" />
                       </SelectTrigger>
                       <SelectContent>
-                        {customers.map((customer) => (
-                          <SelectItem key={customer.id} value={customer.id}>
-                            {customer.name} ({customer.customer_code})
+                        {customers.length > 0 ? (
+                          customers.map((customer) => (
+                            <SelectItem key={customer.id} value={customer.id}>
+                              {customer.name} ({customer.customer_code})
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-customers" disabled>
+                            No customers found
                           </SelectItem>
-                        ))}
+                        )}
                       </SelectContent>
                     </Select>
                     <Button 
