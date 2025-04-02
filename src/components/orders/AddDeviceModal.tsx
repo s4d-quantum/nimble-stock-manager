@@ -268,9 +268,8 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
 
     setSavingDevices(true);
     try {
-      // Start a transaction to ensure all operations succeed or fail together
-      const { error: txError } = await supabase.rpc('begin_transaction');
-      if (txError) throw txError;
+      // Start a transaction
+      await supabase.rpc('begin_transaction');
 
       // For each selected device:
       // 1. Add to sales_order_devices
@@ -302,8 +301,7 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
       }
 
       // Commit the transaction
-      const { error: commitError } = await supabase.rpc('commit_transaction');
-      if (commitError) throw commitError;
+      await supabase.rpc('commit_transaction');
 
       toast({
         title: "Success",
@@ -319,9 +317,11 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
       console.error('Error saving devices:', error);
       
       // Rollback the transaction
-      await supabase.rpc('rollback_transaction').catch(e => {
+      try {
+        await supabase.rpc('rollback_transaction');
+      } catch (e) {
         console.error('Error rolling back transaction:', e);
-      });
+      }
       
       toast({
         title: "Error",
@@ -366,7 +366,7 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
               </SelectTrigger>
               <SelectContent>
                 {suppliers.length === 0 ? (
-                  <SelectItem value="loading" disabled>Loading suppliers...</SelectItem>
+                  <SelectItem value="no-suppliers" disabled>Loading suppliers...</SelectItem>
                 ) : (
                   suppliers.map(supplier => (
                     <SelectItem key={supplier.id} value={supplier.id}>

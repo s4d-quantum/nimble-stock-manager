@@ -49,36 +49,7 @@ export type Database = {
           updated_at?: string | null
           updated_by?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "accessories_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "accessories_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "storage_locations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "accessories_manufacturer_id_fkey"
-            columns: ["manufacturer_id"]
-            isOneToOne: false
-            referencedRelation: "manufacturers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "accessories_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       accessory_transactions: {
         Row: {
@@ -117,22 +88,7 @@ export type Database = {
           reference_id?: string
           transaction_type?: Database["public"]["Enums"]["transaction_type"]
         }
-        Relationships: [
-          {
-            foreignKeyName: "accessory_transactions_accessory_id_fkey"
-            columns: ["accessory_id"]
-            isOneToOne: false
-            referencedRelation: "accessories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "accessory_transactions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       cellular_device_transactions: {
         Row: {
@@ -168,15 +124,7 @@ export type Database = {
           reference_id?: string
           transaction_type?: Database["public"]["Enums"]["transaction_type"]
         }
-        Relationships: [
-          {
-            foreignKeyName: "cellular_device_transactions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       cellular_devices: {
         Row: {
@@ -322,15 +270,7 @@ export type Database = {
           updated_at?: string | null
           vat_number?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "customers_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       device_configurations: {
         Row: {
@@ -423,22 +363,7 @@ export type Database = {
           reference_id?: string
           transaction_type?: Database["public"]["Enums"]["transaction_type"]
         }
-        Relationships: [
-          {
-            foreignKeyName: "part_transactions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "part_transactions_part_id_fkey"
-            columns: ["part_id"]
-            isOneToOne: false
-            referencedRelation: "parts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       parts: {
         Row: {
@@ -485,13 +410,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "parts_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "parts_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
@@ -503,13 +421,6 @@ export type Database = {
             columns: ["manufacturer_id"]
             isOneToOne: false
             referencedRelation: "manufacturers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "parts_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -918,22 +829,7 @@ export type Database = {
           reference_id?: string
           transaction_type?: Database["public"]["Enums"]["transaction_type"]
         }
-        Relationships: [
-          {
-            foreignKeyName: "serial_device_transactions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "serial_device_transactions_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "serial_devices"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       serial_devices: {
         Row: {
@@ -1001,13 +897,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "serial_devices_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "serial_devices_grade_id_fkey"
             columns: ["grade_id"]
             isOneToOne: false
@@ -1033,13 +922,6 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "serial_devices_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1143,15 +1025,7 @@ export type Database = {
           updated_at?: string | null
           vat_number?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "suppliers_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       tac_codes: {
         Row: {
