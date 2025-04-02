@@ -55,14 +55,6 @@ interface Device {
   selected?: boolean;
 }
 
-interface Manufacturer {
-  manufacturer: string;
-}
-
-interface ModelName {
-  model_name: string;
-}
-
 interface AddDeviceModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -94,8 +86,16 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
 
   // Load suppliers on mount
   useEffect(() => {
-    loadSuppliers();
-  }, []);
+    if (isOpen) {
+      loadSuppliers();
+      setSelectedSupplier('');
+      setDevices([]);
+      setFilteredDevices([]);
+      setSelectedManufacturer('');
+      setSelectedModel('');
+      setSearchQuery('');
+    }
+  }, [isOpen]);
 
   // Load devices when supplier is selected
   useEffect(() => {
@@ -176,14 +176,19 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
         }));
 
         setDevices(formattedDevices);
+        setFilteredDevices(formattedDevices);
 
         // Extract unique manufacturers
-        const uniqueManufacturers = Array.from(new Set(formattedDevices.map(d => d.manufacturer)));
+        const uniqueManufacturers = Array.from(new Set(formattedDevices.map(d => d.manufacturer))).sort();
         setManufacturers(uniqueManufacturers);
 
         // Extract unique models
-        const uniqueModels = Array.from(new Set(formattedDevices.map(d => d.model_name)));
+        const uniqueModels = Array.from(new Set(formattedDevices.map(d => d.model_name))).sort();
         setModels(uniqueModels);
+        
+        // Calculate total pages
+        setTotalPages(Math.max(1, Math.ceil(formattedDevices.length / itemsPerPage)));
+        setCurrentPage(1);
       }
     } catch (error) {
       console.error('Error loading devices:', error);
@@ -210,7 +215,7 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
       filtered = filtered.filter(device => device.model_name === selectedModel);
     }
 
-    // Apply search query (search in IMEI)
+    // Apply search query (search in IMEI, manufacturer, or model)
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(device =>
@@ -365,15 +370,11 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
                 <SelectValue placeholder="Select a supplier" />
               </SelectTrigger>
               <SelectContent>
-                {suppliers.length === 0 ? (
-                  <SelectItem value="no-suppliers" disabled>Loading suppliers...</SelectItem>
-                ) : (
-                  suppliers.map(supplier => (
-                    <SelectItem key={supplier.id} value={supplier.id}>
-                      {supplier.name}
-                    </SelectItem>
-                  ))
-                )}
+                {suppliers.map(supplier => (
+                  <SelectItem key={supplier.id} value={supplier.id}>
+                    {supplier.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

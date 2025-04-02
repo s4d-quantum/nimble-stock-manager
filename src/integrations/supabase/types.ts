@@ -1104,6 +1104,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      begin_transaction: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      commit_transaction: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       fn_book_device_with_supplier: {
         Args: {
           device_id: string
@@ -1197,6 +1205,10 @@ export type Database = {
           model_name: string
           model_no: string
         }[]
+      }
+      rollback_transaction: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       test_get_cellular_device_details: {
         Args: {
