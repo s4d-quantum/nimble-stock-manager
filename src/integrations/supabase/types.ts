@@ -244,13 +244,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "cellular_devices_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "cellular_devices_grade_id_fkey"
             columns: ["grade_id"]
             isOneToOne: false
@@ -276,13 +269,6 @@ export type Database = {
             columns: ["tac_id"]
             isOneToOne: false
             referencedRelation: "tac_codes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cellular_devices_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -607,13 +593,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "purchase_order_devices_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "purchase_order_devices_purchase_order_id_fkey"
             columns: ["purchase_order_id"]
             isOneToOne: false
@@ -625,13 +604,6 @@ export type Database = {
             columns: ["serial_device_id"]
             isOneToOne: false
             referencedRelation: "serial_devices"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "purchase_order_devices_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -835,13 +807,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "sales_order_devices_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "sales_order_devices_sales_order_id_fkey"
             columns: ["sales_order_id"]
             isOneToOne: false
@@ -853,13 +818,6 @@ export type Database = {
             columns: ["serial_device_id"]
             isOneToOne: false
             referencedRelation: "serial_devices"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sales_order_devices_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -918,24 +876,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "sales_orders_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "sales_orders_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sales_orders_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]

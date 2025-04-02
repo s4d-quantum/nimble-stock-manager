@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,10 +49,8 @@ const Orders = () => {
   useEffect(() => {
     loadOrders();
     
-    // Check for success message in location state
     if (location.state?.message) {
       setSuccessMessage(location.state.message);
-      // Clear the message after 5 seconds
       const timer = setTimeout(() => {
         setSuccessMessage(null);
       }, 5000);
@@ -79,11 +76,10 @@ const Orders = () => {
 
       if (error) throw error;
 
-      // Type fix: Cast the data to match our SalesOrder type
       const ordersWithCount = data?.map(order => ({
         ...order,
         device_count: order.device_count?.[0]?.count || 0,
-        status: order.status as SalesOrder['status'] // Cast status to the correct type
+        status: order.status as SalesOrder['status']
       })) as SalesOrder[] || [];
 
       setOrders(ordersWithCount);
@@ -119,7 +115,6 @@ const Orders = () => {
     return matchesSearch && matchesStatus;
   });
 
-  // Fallback to mockOrders if there are no orders from Supabase yet
   const mockOrders = [
     { 
       id: 'ORD-12345', 
@@ -156,7 +151,6 @@ const Orders = () => {
         <p className="text-muted-foreground">Manage sales orders and handle device shipments</p>
       </div>
 
-      {/* Success Message */}
       {successMessage && (
         <div className="mt-4 p-4 bg-green-100 text-green-800 rounded-md flex items-center">
           <CheckCircle2 className="h-5 w-5 mr-2 flex-shrink-0" />

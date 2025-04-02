@@ -7,6 +7,7 @@ import Index from './pages/Index';
 import Products from './pages/Products';
 import Customers from './pages/Customers';
 import Orders from './pages/Orders';
+import SalesOrderDetail from './pages/SalesOrderDetail';
 import DeviceDetail from './pages/DeviceDetail';
 import NotFound from './pages/NotFound';
 import './App.css';
@@ -31,7 +32,7 @@ const App: React.FC = () => {
               <Route path="/device/:id" element={<DeviceDetail />} />
               <Route path="/customers" element={<Customers />} />
               <Route path="/orders" element={<Orders />} />
-              <Route path="/sales/:id" element={<DeviceDetail />} />
+              <Route path="/sales/:id" element={<SalesOrderDetail />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
