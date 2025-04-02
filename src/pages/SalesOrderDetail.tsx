@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,6 +26,7 @@ import {
   PaginationPrevious 
 } from '@/components/ui/pagination';
 import { useToast } from '@/hooks/use-toast';
+import AddDeviceModal from '@/components/orders/AddDeviceModal';
 
 // Status color mapping
 const statusColors = {
@@ -112,7 +112,6 @@ const SalesOrderDetail = () => {
 
   const loadOrderDevices = async (page: number = 1) => {
     try {
-      // Count total devices for pagination
       const { count, error: countError } = await supabase
         .from('sales_order_devices')
         .select('*', { count: 'exact', head: true })
@@ -124,11 +123,9 @@ const SalesOrderDetail = () => {
         setTotalPages(Math.ceil(count / itemsPerPage));
       }
       
-      // Get devices for current page
       const from = (page - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;
       
-      // We need to get the device details, which could be either cellular or serial devices
       const { data: orderDevicesData, error: devicesError } = await supabase
         .from('sales_order_devices')
         .select(`
@@ -144,7 +141,6 @@ const SalesOrderDetail = () => {
       if (orderDevicesData && orderDevicesData.length > 0) {
         const deviceDetails: DeviceWithDetails[] = await Promise.all(
           orderDevicesData.map(async (orderDevice) => {
-            // For cellular devices
             if (orderDevice.cellular_device_id) {
               const { data: cellularData, error: cellularError } = await supabase
                 .from('cellular_devices')
@@ -165,7 +161,6 @@ const SalesOrderDetail = () => {
                 return { id: orderDevice.id, imei: 'Error loading device' };
               }
               
-              // Get tac code details for manufacturer and model
               let manufacturer = '';
               let model_name = '';
               let grade = '';
@@ -219,7 +214,6 @@ const SalesOrderDetail = () => {
                 supplier_name
               };
             } 
-            // For serial devices
             else if (orderDevice.serial_device_id) {
               const { data: serialData, error: serialError } = await supabase
                 .from('serial_devices')
@@ -240,7 +234,6 @@ const SalesOrderDetail = () => {
                 return { id: orderDevice.id };
               }
 
-              // Get manufacturer, grade, and supplier details
               let manufacturer = '';
               let grade = '';
               let supplier_name = '';
@@ -343,6 +336,11 @@ const SalesOrderDetail = () => {
     }
   };
 
+  const handleDevicesAdded = () => {
+    loadOrderDevices(currentPage);
+    loadOrderDetails();
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -387,7 +385,6 @@ const SalesOrderDetail = () => {
       </div>
 
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Customer Information */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -421,7 +418,6 @@ const SalesOrderDetail = () => {
           </CardContent>
         </Card>
 
-        {/* Order Information */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -454,7 +450,6 @@ const SalesOrderDetail = () => {
           </CardContent>
         </Card>
 
-        {/* Shipping Information */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -492,7 +487,6 @@ const SalesOrderDetail = () => {
         </Card>
       </div>
 
-      {/* Notes Section */}
       <div className="mt-6">
         <h2 className="text-lg font-semibold mb-2">Notes</h2>
         <div className="flex gap-2">
@@ -513,7 +507,6 @@ const SalesOrderDetail = () => {
         </div>
       </div>
 
-      {/* Devices Table */}
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-4">Devices in Order</h2>
         <div className="border rounded-md">
@@ -591,22 +584,11 @@ const SalesOrderDetail = () => {
         </div>
       </div>
 
-      {/* Placeholder for the Add Device Modal - we'll implement this in the next step */}
-      {isAddDeviceModalOpen && (
-        <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
-          <div className="bg-background p-6 rounded-lg shadow-lg max-w-md w-full">
-            <h2 className="text-xl font-semibold mb-4">Add Devices</h2>
-            <p className="text-muted-foreground mb-4">
-              This modal will be implemented in the next step.
-            </p>
-            <div className="flex justify-end">
-              <Button variant="outline" onClick={() => setIsAddDeviceModalOpen(false)}>
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AddDeviceModal 
+        isOpen={isAddDeviceModalOpen} 
+        onClose={() => setIsAddDeviceModalOpen(false)} 
+        onDevicesAdded={handleDevicesAdded}
+      />
     </div>
   );
 };

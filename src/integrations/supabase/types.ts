@@ -1340,6 +1340,7 @@ export type Database = {
         | "repair"
         | "qc_required"
         | "qc_failed"
+        | "allocated"
       order_status:
         | "draft"
         | "pending"
