@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -58,44 +57,28 @@ const CreateSalesOrder: React.FC<CreateSalesOrderProps> = ({
     try {
       console.log("Fetching customers...");
       
-      // Direct approach to test connection
       const { data, error } = await supabase
         .from('customers')
-        .select('*');
+        .select('id, name, customer_code');
       
       if (error) {
         console.error("Supabase error details:", error);
         throw error;
       }
       
-      console.log("Raw customers data:", data);
+      console.log("Customers data:", data);
       
       if (data && data.length > 0) {
-        // Map the data to ensure all fields are properly typed
-        const customerData = data.map(customer => ({
-          id: customer.id,
-          name: customer.name,
-          customer_code: customer.customer_code,
-          email: customer.email,
-          phone: customer.phone,
-          address_line1: customer.address_line1,
-          address_line2: customer.address_line2,
-          city: customer.city,
-          postcode: customer.postcode,
-          country: customer.country,
-          vat_number: customer.vat_number
-        })) as Customer[];
-        
-        console.log("Processed customer data:", customerData);
-        setCustomers(customerData);
+        setCustomers(data as Customer[]);
       } else {
-        console.log("No customers found or data is empty", data);
+        console.log("No customers found or data is empty");
         setCustomers([]);
         
-        // Check if table exists
+        // Simple check if table exists without using count(*)
         const { error: tableError } = await supabase
           .from('customers')
-          .select('count(*)');
+          .select('id')
+          .limit(1);
           
         if (tableError) {
           console.error("Table check error:", tableError);
@@ -232,7 +215,7 @@ const CreateSalesOrder: React.FC<CreateSalesOrderProps> = ({
                         {customers.length > 0 ? (
                           customers.map((customer) => (
                             <SelectItem key={customer.id} value={customer.id}>
-                              {customer.name} ({customer.customer_code})
+                              {customer.name} {customer.customer_code ? `(${customer.customer_code})` : ''}
                             </SelectItem>
                           ))
                         ) : (
