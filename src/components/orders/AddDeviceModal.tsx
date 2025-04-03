@@ -275,7 +275,7 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
     try {
       const deviceIds = selectedDevices.map(device => device.id);
       
-      // Call the RPC function directly
+      // Call the RPC function directly with updated parameters
       const { error } = await supabase.rpc('add_devices_to_sales_order', {
         p_sales_order_id: salesOrderId,
         p_device_ids: deviceIds

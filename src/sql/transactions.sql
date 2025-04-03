@@ -1,4 +1,5 @@
 
+
 -- This file contains SQL that should be executed in the Supabase SQL Editor.
 -- These functions help with transaction management from the client.
 
@@ -44,3 +45,4 @@ BEGIN
   END;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
