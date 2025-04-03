@@ -1,10 +1,11 @@
 
+
 export interface CellularDevice {
   id: string;
   imei: string;
   storage_gb?: number | null;
   color?: string | null;
-  status: 'in_stock' | 'sold' | 'returned' | 'repair' | 'qc_required' | 'quarantine' | 'qc_failed';
+  status: 'in_stock' | 'sold' | 'returned' | 'repair' | 'qc_required' | 'quarantine' | 'qc_failed' | 'allocated';
   grade_id?: number | null;
   supplier_id?: string | null;
   tac_id?: string | null;
@@ -69,3 +70,4 @@ export interface SalesOrder {
   created_by?: string;
   updated_by?: string;
 }
+

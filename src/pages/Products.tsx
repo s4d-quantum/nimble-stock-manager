@@ -23,6 +23,7 @@ const statusColors = {
   'qc_required': 'bg-red-100 text-red-800',
   'quarantine': 'bg-orange-100 text-orange-800',
   'qc_failed': 'bg-red-500 text-white',
+  'allocated': 'bg-green-200 text-green-800'
 };
 
 const Products = () => {
@@ -218,6 +219,7 @@ const Products = () => {
             <option value="qc_required">QC Required</option>
             <option value="quarantine">Quarantine</option>
             <option value="qc_failed">QC Failed</option>
+            <option value="allocated">Allocated</option>
           </select>
 
           <button 

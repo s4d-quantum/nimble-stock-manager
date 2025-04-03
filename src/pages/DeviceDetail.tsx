@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -124,7 +123,7 @@ const DeviceDetail = () => {
           supplier_id: supplierId,
           color: color || null,
           storage_gb: storageGB ? parseInt(storageGB) : null,
-          updated_at: new Date().toISOString(), // Fix: Convert Date to ISO string for database
+          updated_at: new Date().toISOString(),
         })
         .eq('id', id);
 
@@ -223,6 +222,7 @@ const DeviceDetail = () => {
                 <SelectItem value="qc_required">QC Required</SelectItem>
                 <SelectItem value="quarantine">Quarantine</SelectItem>
                 <SelectItem value="qc_failed">QC Failed</SelectItem>
+                <SelectItem value="allocated">Allocated</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -295,7 +295,6 @@ const DeviceDetail = () => {
                 variant="ghost"
                 onClick={() => {
                   setIsEditing(false);
-                  // Reset values to original device values
                   setDeviceStatus(device.status);
                   setGradeId(device.grade_id ? device.grade_id.toString() : '');
                   setSupplierId(device.supplier_id || '');
