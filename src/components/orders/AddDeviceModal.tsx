@@ -273,8 +273,16 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
 
     setSavingDevices(true);
     try {
+      // Call our transaction function through a standard fetch to avoid TS errors
       // Start a transaction
-      await supabase.rpc('begin_transaction');
+      await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/begin_transaction`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabase.supabaseKey,
+          'Authorization': `Bearer ${supabase.supabaseKey}`
+        }
+      });
 
       // For each selected device:
       // 1. Add to sales_order_devices
@@ -306,7 +314,14 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
       }
 
       // Commit the transaction
-      await supabase.rpc('commit_transaction');
+      await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/commit_transaction`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabase.supabaseKey,
+          'Authorization': `Bearer ${supabase.supabaseKey}`
+        }
+      });
 
       toast({
         title: "Success",
@@ -323,7 +338,14 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
       
       // Rollback the transaction
       try {
-        await supabase.rpc('rollback_transaction');
+        await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/rollback_transaction`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabase.supabaseKey,
+            'Authorization': `Bearer ${supabase.supabaseKey}`
+          }
+        });
       } catch (e) {
         console.error('Error rolling back transaction:', e);
       }
@@ -402,7 +424,7 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
                     <SelectValue placeholder="Manufacturer" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Manufacturers</SelectItem>
+                    <SelectItem value="_all">All Manufacturers</SelectItem>
                     {manufacturers.map(manufacturer => (
                       <SelectItem key={manufacturer} value={manufacturer}>
                         {manufacturer}
@@ -419,7 +441,7 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
                     <SelectValue placeholder="Model" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Models</SelectItem>
+                    <SelectItem value="_all">All Models</SelectItem>
                     {models.map(model => (
                       <SelectItem key={model} value={model}>
                         {model}

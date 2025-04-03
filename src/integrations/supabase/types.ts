@@ -1104,6 +1104,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_devices_to_sales_order: {
+        Args: {
+          p_sales_order_id: string
+          p_device_ids: string[]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       begin_transaction: {
         Args: Record<PropertyKey, never>
         Returns: undefined
