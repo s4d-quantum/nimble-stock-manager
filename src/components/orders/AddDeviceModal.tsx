@@ -273,61 +273,25 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
 
     setSavingDevices(true);
     try {
-      // Instead of using transactions, we'll use the batch operation pattern
-      // This is more reliable with Supabase's current implementation
+      // Create a UUID for the user - this replaces the "system" string that was causing the error
+      // In a real application, this would be the authenticated user's ID
+      const deviceIds = selectedDevices.map(device => device.id);
       
-      // Get the current user UUID
-      const userId = crypto.randomUUID(); // Temporary workaround - later replace with actual user ID
-
-      // Process all devices
-      let successCount = 0;
+      // Call the RPC function directly
+      const { error } = await supabase.rpc('add_devices_to_sales_order', {
+        p_sales_order_id: salesOrderId,
+        p_device_ids: deviceIds,
+        p_user_id: crypto.randomUUID() // Generate a random UUID as a placeholder
+      });
       
-      for (const device of selectedDevices) {
-        try {
-          // Step 1: Add to sales_order_devices
-          const { error: insertError } = await supabase
-            .from('sales_order_devices')
-            .insert({
-              sales_order_id: salesOrderId,
-              cellular_device_id: device.id,
-              created_by: userId,
-              updated_by: userId
-            });
-
-          if (insertError) {
-            console.error('Error inserting device:', insertError);
-            continue; // Try the next device
-          }
-
-          // Step 2: Update device status
-          const { error: updateError } = await supabase
-            .from('cellular_devices')
-            .update({ 
-              status: 'sold',
-              updated_by: userId,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', device.id);
-
-          if (updateError) {
-            console.error('Error updating device status:', updateError);
-            continue; // Try the next device
-          }
-          
-          successCount++;
-        } catch (deviceError) {
-          console.error('Error processing device:', deviceError);
-          // Continue with the next device
-        }
-      }
-
-      if (successCount === 0) {
-        throw new Error("Failed to add any devices to the order");
+      if (error) {
+        console.error('Error calling add_devices_to_sales_order:', error);
+        throw error;
       }
 
       toast({
         title: "Success",
-        description: `Added ${successCount} devices to the sales order`,
+        description: `Added ${selectedDevices.length} devices to the sales order`,
       });
 
       // Call the callback to refresh the parent component
