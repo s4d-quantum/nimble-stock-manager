@@ -2,26 +2,51 @@
 -- This file contains SQL that should be executed in the Supabase SQL Editor.
 -- These functions help with transaction management from the client.
 
--- Function to begin a transaction
-CREATE OR REPLACE FUNCTION begin_transaction()
-RETURNS void AS $$
+-- Function to add devices to a sales order with proper transaction handling
+CREATE OR REPLACE FUNCTION add_devices_to_sales_order(
+  p_sales_order_id UUID,
+  p_device_ids UUID[],
+  p_user_id TEXT
+)
+RETURNS VOID AS $$
+DECLARE
+  device_id UUID;
 BEGIN
-  EXECUTE 'BEGIN';
-END;
-$$ LANGUAGE plpgsql;
+  -- Start a transaction
+  BEGIN
+    -- Loop through each device ID provided
+    FOREACH device_id IN ARRAY p_device_ids
+    LOOP
+      -- Add to sales_order_devices
+      INSERT INTO sales_order_devices (
+        sales_order_id, 
+        cellular_device_id, 
+        created_by, 
+        updated_by
+      )
+      VALUES (
+        p_sales_order_id, 
+        device_id, 
+        p_user_id, 
+        p_user_id
+      );
 
--- Function to commit a transaction
-CREATE OR REPLACE FUNCTION commit_transaction()
-RETURNS void AS $$
-BEGIN
-  EXECUTE 'COMMIT';
-END;
-$$ LANGUAGE plpgsql;
+      -- Update the status of the device in cellular_devices
+      UPDATE cellular_devices
+      SET 
+        status = 'sold',
+        updated_by = p_user_id,
+        updated_at = NOW() 
+      WHERE id = device_id;
+    END LOOP;
 
--- Function to rollback a transaction
-CREATE OR REPLACE FUNCTION rollback_transaction()
-RETURNS void AS $$
-BEGIN
-  EXECUTE 'ROLLBACK';
+    -- Optionally: Update device count on sales_order
+    -- This could be done via a trigger as well
+    
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- Rollback the transaction in case of any error
+      RAISE;
+  END;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
