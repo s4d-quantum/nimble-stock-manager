@@ -130,7 +130,6 @@ export type Database = {
         Row: {
           color: string | null
           created_at: string | null
-          created_by: string
           grade_id: number | null
           id: string
           imei: string
@@ -146,12 +145,10 @@ export type Database = {
           supplier_id: string | null
           tac_id: string
           updated_at: string | null
-          updated_by: string
         }
         Insert: {
           color?: string | null
           created_at?: string | null
-          created_by: string
           grade_id?: number | null
           id?: string
           imei: string
@@ -167,12 +164,10 @@ export type Database = {
           supplier_id?: string | null
           tac_id: string
           updated_at?: string | null
-          updated_by: string
         }
         Update: {
           color?: string | null
           created_at?: string | null
-          created_by?: string
           grade_id?: number | null
           id?: string
           imei?: string
@@ -188,7 +183,6 @@ export type Database = {
           supplier_id?: string | null
           tac_id?: string
           updated_at?: string | null
-          updated_by?: string
         }
         Relationships: [
           {
@@ -664,7 +658,6 @@ export type Database = {
         Row: {
           cellular_device_id: string | null
           created_at: string | null
-          created_by: string
           id: string
           qc_comments: string | null
           qc_completed: boolean
@@ -675,12 +668,10 @@ export type Database = {
           sales_order_id: string
           serial_device_id: string | null
           updated_at: string | null
-          updated_by: string
         }
         Insert: {
           cellular_device_id?: string | null
           created_at?: string | null
-          created_by: string
           id?: string
           qc_comments?: string | null
           qc_completed?: boolean
@@ -691,12 +682,10 @@ export type Database = {
           sales_order_id: string
           serial_device_id?: string | null
           updated_at?: string | null
-          updated_by: string
         }
         Update: {
           cellular_device_id?: string | null
           created_at?: string | null
-          created_by?: string
           id?: string
           qc_comments?: string | null
           qc_completed?: boolean
@@ -707,7 +696,6 @@ export type Database = {
           sales_order_id?: string
           serial_device_id?: string | null
           updated_at?: string | null
-          updated_by?: string
         }
         Relationships: [
           {
@@ -736,7 +724,6 @@ export type Database = {
       sales_orders: {
         Row: {
           created_at: string | null
-          created_by: string
           customer_id: string
           id: string
           notes: string | null
@@ -749,11 +736,9 @@ export type Database = {
           total_pallets: number | null
           tracking_number: string | null
           updated_at: string | null
-          updated_by: string
         }
         Insert: {
           created_at?: string | null
-          created_by: string
           customer_id: string
           id?: string
           notes?: string | null
@@ -766,11 +751,9 @@ export type Database = {
           total_pallets?: number | null
           tracking_number?: string | null
           updated_at?: string | null
-          updated_by: string
         }
         Update: {
           created_at?: string | null
-          created_by?: string
           customer_id?: string
           id?: string
           notes?: string | null
@@ -783,7 +766,6 @@ export type Database = {
           total_pallets?: number | null
           tracking_number?: string | null
           updated_at?: string | null
-          updated_by?: string
         }
         Relationships: [
           {
@@ -1104,14 +1086,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      add_devices_to_sales_order: {
-        Args: {
-          p_sales_order_id: string
-          p_device_ids: string[]
-          p_user_id: string
-        }
-        Returns: undefined
-      }
+      add_devices_to_sales_order:
+        | {
+            Args: {
+              p_sales_order_id: string
+              p_device_ids: string[]
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_sales_order_id: string
+              p_device_ids: string[]
+              p_user_id: string
+            }
+            Returns: undefined
+          }
       begin_transaction: {
         Args: Record<PropertyKey, never>
         Returns: undefined

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -130,9 +131,6 @@ const CreateSalesOrder: React.FC<CreateSalesOrderProps> = ({
       }
       const orderNumber = `SO-${String(newOrderNumber).padStart(6, '0')}`;
 
-      // Use a placeholder user ID since we don't have auth yet
-      const userId = crypto.randomUUID();
-
       const { data, error } = await supabase
         .from('sales_orders')
         .insert({
@@ -140,9 +138,7 @@ const CreateSalesOrder: React.FC<CreateSalesOrderProps> = ({
           order_number: orderNumber,
           order_date: orderDate,
           notes,
-          status: 'draft',
-          created_by: userId,
-          updated_by: userId
+          status: 'draft'
         })
         .select()
         .single();

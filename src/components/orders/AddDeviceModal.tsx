@@ -273,15 +273,12 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
 
     setSavingDevices(true);
     try {
-      // Create a UUID for the user - this replaces the "system" string that was causing the error
-      // In a real application, this would be the authenticated user's ID
       const deviceIds = selectedDevices.map(device => device.id);
       
       // Call the RPC function directly
       const { error } = await supabase.rpc('add_devices_to_sales_order', {
         p_sales_order_id: salesOrderId,
-        p_device_ids: deviceIds,
-        p_user_id: crypto.randomUUID() // Generate a random UUID as a placeholder
+        p_device_ids: deviceIds
       });
       
       if (error) {

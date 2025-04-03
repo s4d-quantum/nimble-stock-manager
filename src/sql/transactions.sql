@@ -5,8 +5,7 @@
 -- Function to add devices to a sales order with proper transaction handling
 CREATE OR REPLACE FUNCTION add_devices_to_sales_order(
   p_sales_order_id UUID,
-  p_device_ids UUID[],
-  p_user_id TEXT
+  p_device_ids UUID[]
 )
 RETURNS VOID AS $$
 DECLARE
@@ -20,22 +19,17 @@ BEGIN
       -- Add to sales_order_devices
       INSERT INTO sales_order_devices (
         sales_order_id, 
-        cellular_device_id, 
-        created_by, 
-        updated_by
+        cellular_device_id
       )
       VALUES (
         p_sales_order_id, 
-        device_id, 
-        p_user_id, 
-        p_user_id
+        device_id
       );
 
       -- Update the status of the device in cellular_devices
       UPDATE cellular_devices
       SET 
         status = 'sold',
-        updated_by = p_user_id,
         updated_at = NOW() 
       WHERE id = device_id;
     END LOOP;
