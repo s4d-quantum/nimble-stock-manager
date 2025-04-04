@@ -68,4 +68,5 @@ export interface SalesOrder {
   device_count?: number;
   created_by?: string;
   updated_by?: string;
+  priority?: number;
 }

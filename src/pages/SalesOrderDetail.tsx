@@ -11,7 +11,8 @@ import {
   Plus,
   FileText,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  Barcode
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +29,7 @@ import {
 } from '@/components/ui/pagination';
 import { useToast } from '@/hooks/use-toast';
 import AddDeviceModal from '@/components/orders/AddDeviceModal';
+import BookDevicesModal from '@/components/orders/BookDevicesModal';
 
 // Status color mapping
 const statusColors = {
@@ -49,6 +51,7 @@ interface DeviceWithDetails {
   storage_gb?: number;
   grade?: string;
   supplier_name?: string;
+  status?: string;
 }
 
 const SalesOrderDetail = () => {
@@ -63,6 +66,7 @@ const SalesOrderDetail = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isAddDeviceModalOpen, setIsAddDeviceModalOpen] = useState(false);
+  const [isBookDeviceModalOpen, setIsBookDeviceModalOpen] = useState(false);
   const itemsPerPage = 10;
   const { toast } = useToast();
 
@@ -166,7 +170,8 @@ const SalesOrderDetail = () => {
                   storage_gb,
                   grade_id,
                   supplier_id,
-                  tac_id
+                  tac_id,
+                  status
                 `)
                 .eq('id', orderDevice.cellular_device_id)
                 .single();
@@ -226,7 +231,8 @@ const SalesOrderDetail = () => {
                 color: cellularData.color || '',
                 storage_gb: cellularData.storage_gb,
                 grade,
-                supplier_name
+                supplier_name,
+                status: cellularData.status
               };
             } 
             else if (orderDevice.serial_device_id) {
@@ -239,7 +245,8 @@ const SalesOrderDetail = () => {
                   model_name,
                   color,
                   grade_id,
-                  supplier_id
+                  supplier_id,
+                  status
                 `)
                 .eq('id', orderDevice.serial_device_id)
                 .single();
@@ -296,7 +303,8 @@ const SalesOrderDetail = () => {
                 model_name: serialData.model_name,
                 color: serialData.color || '',
                 grade,
-                supplier_name
+                supplier_name,
+                status: serialData.status
               };
             }
             
@@ -393,6 +401,21 @@ const SalesOrderDetail = () => {
     loadOrderDetails();
   };
 
+  const getDeviceStatusBadge = (status?: string) => {
+    if (!status) return null;
+    
+    switch(status) {
+      case 'in_stock':
+        return <Badge className="bg-yellow-500">In Stock</Badge>;
+      case 'sold':
+        return <Badge className="bg-green-500">Sold</Badge>;
+      case 'allocated':
+        return <Badge className="bg-blue-500">Allocated</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -415,6 +438,8 @@ const SalesOrderDetail = () => {
       </div>
     );
   }
+
+  const isProcessingOrConfirmed = order.status === 'processing' || order.status === 'confirmed';
 
   return (
     <div className="animate-fade-in">
@@ -442,9 +467,15 @@ const SalesOrderDetail = () => {
               <CheckCircle className="mr-2 h-4 w-4" /> Finalize Order
             </Button>
           )}
-          <Button onClick={() => setIsAddDeviceModalOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Add Devices
-          </Button>
+          {isProcessingOrConfirmed ? (
+            <Button onClick={() => setIsBookDeviceModalOpen(true)} className="bg-green-600 hover:bg-green-700">
+              <Barcode className="mr-2 h-4 w-4" /> Book Devices
+            </Button>
+          ) : (
+            <Button onClick={() => setIsAddDeviceModalOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Add Devices
+            </Button>
+          )}
         </div>
       </div>
 
@@ -584,12 +615,13 @@ const SalesOrderDetail = () => {
                 <TableHead>Storage</TableHead>
                 <TableHead>Grade</TableHead>
                 <TableHead>Supplier</TableHead>
+                <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {devices.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-4 text-muted-foreground">
                     No devices found in this order
                   </TableCell>
                 </TableRow>
@@ -607,6 +639,7 @@ const SalesOrderDetail = () => {
                     </TableCell>
                     <TableCell>{device.grade || 'N/A'}</TableCell>
                     <TableCell>{device.supplier_name || 'N/A'}</TableCell>
+                    <TableCell>{getDeviceStatusBadge(device.status)}</TableCell>
                   </TableRow>
                 ))
               )}
@@ -652,6 +685,14 @@ const SalesOrderDetail = () => {
         isOpen={isAddDeviceModalOpen} 
         onClose={() => setIsAddDeviceModalOpen(false)} 
         onDevicesAdded={handleDevicesAdded}
+        salesOrderId={id || ''}
+      />
+
+      <BookDevicesModal
+        isOpen={isBookDeviceModalOpen}
+        onClose={() => setIsBookDeviceModalOpen(false)}
+        onDevicesBooked={handleDevicesAdded}
+        salesOrderId={id || ''}
       />
     </div>
   );

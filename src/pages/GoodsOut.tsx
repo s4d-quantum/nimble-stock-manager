@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { SalesOrder } from '@/types/inventory';
 import {
@@ -13,7 +13,8 @@ import {
   Truck,
   Eye,
   Package2,
-  AlertTriangle
+  AlertTriangle,
+  Barcode
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +38,14 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
 
 const GoodsOut: React.FC = () => {
   const [orders, setOrders] = useState<SalesOrder[]>([]);
@@ -45,6 +54,14 @@ const GoodsOut: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<string>('order_date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
+  const [isShippingModalOpen, setIsShippingModalOpen] = useState(false);
+  const [carrierName, setCarrierName] = useState('');
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [totalBoxes, setTotalBoxes] = useState<number | undefined>(undefined);
+  const [totalPallets, setTotalPallets] = useState<number | undefined>(undefined);
+  const [savingShipment, setSavingShipment] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -126,6 +143,57 @@ const GoodsOut: React.FC = () => {
       default:
         return <Badge>{status}</Badge>;
     }
+  };
+
+  const openShippingModal = (order: SalesOrder) => {
+    setSelectedOrder(order);
+    setCarrierName(order.shipping_carrier || '');
+    setTrackingNumber(order.tracking_number || '');
+    setTotalBoxes(order.total_boxes);
+    setTotalPallets(order.total_pallets);
+    setIsShippingModalOpen(true);
+  };
+
+  const handleShipOrder = async () => {
+    if (!selectedOrder) return;
+    
+    setSavingShipment(true);
+    try {
+      const { error } = await supabase
+        .from('sales_orders')
+        .update({ 
+          status: 'complete',
+          shipping_carrier: carrierName,
+          tracking_number: trackingNumber,
+          total_boxes: totalBoxes,
+          total_pallets: totalPallets,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedOrder.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Order Shipped",
+        description: `Order ${selectedOrder.order_number} has been marked as shipped`,
+      });
+      
+      setIsShippingModalOpen(false);
+      loadOrders();
+    } catch (error) {
+      console.error('Error shipping order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update shipping information",
+        variant: "destructive"
+      });
+    } finally {
+      setSavingShipment(false);
+    }
+  };
+
+  const goToScanDevices = (order: SalesOrder) => {
+    navigate(`/sales/${order.id}`);
   };
 
   const filteredOrders = orders.filter(order => {
@@ -297,8 +365,24 @@ const GoodsOut: React.FC = () => {
                               View
                             </Link>
                           </Button>
+                          
                           {order.status === 'processing' && (
-                            <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                            <Button 
+                              size="sm" 
+                              className="bg-blue-600 hover:bg-blue-700"
+                              onClick={() => goToScanDevices(order)}
+                            >
+                              <Barcode className="h-4 w-4 mr-1" />
+                              Scan
+                            </Button>
+                          )}
+                          
+                          {order.status === 'confirmed' && (
+                            <Button 
+                              size="sm" 
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => openShippingModal(order)}
+                            >
                               <Truck className="h-4 w-4 mr-1" />
                               Ship
                             </Button>
@@ -333,6 +417,79 @@ const GoodsOut: React.FC = () => {
           </div>
         </>
       )}
+
+      {/* Shipping Information Modal */}
+      <Dialog open={isShippingModalOpen} onOpenChange={setIsShippingModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ship Order: {selectedOrder?.order_number}</DialogTitle>
+            <DialogDescription>
+              Enter shipping details to complete this order
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="carrier" className="text-sm font-medium">Carrier Name</label>
+              <Input
+                id="carrier"
+                value={carrierName}
+                onChange={(e) => setCarrierName(e.target.value)}
+                placeholder="e.g. DHL, FedEx, UPS"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="tracking" className="text-sm font-medium">Tracking Number</label>
+              <Input
+                id="tracking"
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+                placeholder="Enter tracking number"
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="boxes" className="text-sm font-medium">Number of Boxes</label>
+                <Input
+                  id="boxes"
+                  type="number"
+                  min="0"
+                  value={totalBoxes !== undefined ? totalBoxes : ''}
+                  onChange={(e) => setTotalBoxes(e.target.value ? Number(e.target.value) : undefined)}
+                  placeholder="0"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="pallets" className="text-sm font-medium">Number of Pallets</label>
+                <Input
+                  id="pallets"
+                  type="number"
+                  min="0"
+                  value={totalPallets !== undefined ? totalPallets : ''}
+                  onChange={(e) => setTotalPallets(e.target.value ? Number(e.target.value) : undefined)}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsShippingModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              disabled={!carrierName || !trackingNumber || savingShipment}
+              onClick={handleShipOrder}
+            >
+              {savingShipment && <RefreshCw className="mr-2 h-4 w-4 animate-spin" />}
+              Complete Shipment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
