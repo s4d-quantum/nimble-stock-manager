@@ -93,7 +93,7 @@ export type Database = {
       cellular_device_transactions: {
         Row: {
           created_at: string | null
-          created_by: string
+          created_by: string | null
           device_id: string
           id: string
           new_status: Database["public"]["Enums"]["device_status"]
@@ -104,7 +104,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          created_by: string
+          created_by?: string | null
           device_id: string
           id?: string
           new_status: Database["public"]["Enums"]["device_status"]
@@ -115,7 +115,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          created_by?: string
+          created_by?: string | null
           device_id?: string
           id?: string
           new_status?: Database["public"]["Enums"]["device_status"]

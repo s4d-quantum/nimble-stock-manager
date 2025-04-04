@@ -10,7 +10,8 @@ import {
   Truck, 
   Plus,
   FileText,
-  Loader2
+  Loader2,
+  CheckCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,7 +55,9 @@ const SalesOrderDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [order, setOrder] = useState<SalesOrder | null>(null);
   const [devices, setDevices] = useState<DeviceWithDetails[]>([]);
+  const [deviceCount, setDeviceCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [savingOrder, setSavingOrder] = useState(false);
   const [notes, setNotes] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -98,6 +101,17 @@ const SalesOrderDetail = () => {
         setOrder(orderData as SalesOrder);
         setNotes(orderData.notes || '');
       }
+      
+      const { count, error: countError } = await supabase
+        .from('sales_order_devices')
+        .select('*', { count: 'exact', head: true })
+        .eq('sales_order_id', id);
+        
+      if (countError) throw countError;
+      
+      if (count !== null) {
+        setDeviceCount(count);
+      }
     } catch (error) {
       console.error('Error loading order details:', error);
       toast({
@@ -121,6 +135,7 @@ const SalesOrderDetail = () => {
       
       if (count !== null) {
         setTotalPages(Math.ceil(count / itemsPerPage));
+        setDeviceCount(count);
       }
       
       const from = (page - 1) * itemsPerPage;
@@ -336,6 +351,43 @@ const SalesOrderDetail = () => {
     }
   };
 
+  const handleFinalizeOrder = async () => {
+    if (!id || !order) return;
+    
+    setSavingOrder(true);
+    try {
+      const { error } = await supabase
+        .from('sales_orders')
+        .update({ 
+          status: 'processing',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setOrder({
+        ...order,
+        status: 'processing',
+        updated_at: new Date().toISOString()
+      });
+
+      toast({
+        title: "Order Finalized",
+        description: "Order has been set to processing status",
+      });
+    } catch (error) {
+      console.error('Error finalizing order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to finalize order",
+        variant: "destructive"
+      });
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
   const handleDevicesAdded = () => {
     loadOrderDevices(currentPage);
     loadOrderDetails();
@@ -379,9 +431,21 @@ const SalesOrderDetail = () => {
           </Badge>
         </div>
         
-        <Button onClick={() => setIsAddDeviceModalOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Add Devices
-        </Button>
+        <div className="flex gap-2">
+          {order.status === 'draft' && (
+            <Button 
+              onClick={handleFinalizeOrder} 
+              disabled={savingOrder || deviceCount === 0}
+              variant="default"
+            >
+              {savingOrder && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <CheckCircle className="mr-2 h-4 w-4" /> Finalize Order
+            </Button>
+          )}
+          <Button onClick={() => setIsAddDeviceModalOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Add Devices
+          </Button>
+        </div>
       </div>
 
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -444,7 +508,7 @@ const SalesOrderDetail = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Devices:</span>
-                <span className="font-medium">{order.device_count || 0}</span>
+                <span className="font-medium">{deviceCount}</span>
               </div>
             </div>
           </CardContent>

@@ -1,5 +1,4 @@
 
-
 export interface CellularDevice {
   id: string;
   imei: string;
@@ -70,4 +69,3 @@ export interface SalesOrder {
   created_by?: string;
   updated_by?: string;
 }
-
