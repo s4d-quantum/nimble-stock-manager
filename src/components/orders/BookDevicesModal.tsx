@@ -157,7 +157,7 @@ const BookDevicesModal: React.FC<BookDevicesModalProps> = ({
     }
     
     try {
-      // Update the device status to 'sold'
+      // Update the device status to 'sold' during the booking process
       const { error: updateError } = await supabase
         .from('cellular_devices')
         .update({ status: 'sold' })

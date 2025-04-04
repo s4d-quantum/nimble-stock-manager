@@ -26,10 +26,10 @@ BEGIN
         device_id
       );
 
-      -- Update the status of the device in cellular_devices
+      -- Update the status of the device in cellular_devices to 'allocated' instead of 'sold'
       UPDATE cellular_devices
       SET 
-        status = 'sold',
+        status = 'allocated',
         updated_at = NOW() 
       WHERE id = device_id;
     END LOOP;

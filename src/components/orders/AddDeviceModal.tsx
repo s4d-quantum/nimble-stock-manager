@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -59,14 +58,16 @@ interface AddDeviceModalProps {
   isOpen: boolean;
   onClose: () => void;
   onDevicesAdded: () => void;
+  salesOrderId: string;
 }
 
 const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ 
   isOpen, 
   onClose,
-  onDevicesAdded
+  onDevicesAdded,
+  salesOrderId
 }) => {
-  const { id: salesOrderId } = useParams<{ id: string }>();
+  const { id: salesOrderIdParam } = useParams<{ id: string }>();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState<string>('');
   const [devices, setDevices] = useState<Device[]>([]);
@@ -84,7 +85,6 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
   
   const { toast } = useToast();
 
-  // Load suppliers on mount
   useEffect(() => {
     if (isOpen) {
       loadSuppliers();
@@ -97,7 +97,6 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
     }
   }, [isOpen]);
 
-  // Load devices when supplier is selected
   useEffect(() => {
     if (selectedSupplier) {
       loadDevices(selectedSupplier);
@@ -107,7 +106,6 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
     }
   }, [selectedSupplier]);
 
-  // Apply filters when any filter changes
   useEffect(() => {
     applyFilters();
   }, [devices, searchQuery, selectedManufacturer, selectedModel]);
@@ -137,7 +135,6 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
   const loadDevices = async (supplierId: string) => {
     setLoading(true);
     try {
-      // Get devices that are in stock and belong to the selected supplier
       const { data, error } = await supabase
         .from('cellular_devices')
         .select(`
@@ -178,15 +175,12 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
         setDevices(formattedDevices);
         setFilteredDevices(formattedDevices);
 
-        // Extract unique manufacturers
         const uniqueManufacturers = Array.from(new Set(formattedDevices.map(d => d.manufacturer))).sort();
         setManufacturers(uniqueManufacturers);
 
-        // Extract unique models
         const uniqueModels = Array.from(new Set(formattedDevices.map(d => d.model_name))).sort();
         setModels(uniqueModels);
         
-        // Calculate total pages
         setTotalPages(Math.max(1, Math.ceil(formattedDevices.length / itemsPerPage)));
         setCurrentPage(1);
       }
@@ -205,17 +199,14 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
   const applyFilters = () => {
     let filtered = [...devices];
 
-    // Apply manufacturer filter
     if (selectedManufacturer && selectedManufacturer !== '_all') {
       filtered = filtered.filter(device => device.manufacturer === selectedManufacturer);
     }
 
-    // Apply model filter
     if (selectedModel && selectedModel !== '_all') {
       filtered = filtered.filter(device => device.model_name === selectedModel);
     }
 
-    // Apply search query (search in IMEI, manufacturer, or model)
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(device =>
@@ -226,9 +217,7 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
     }
 
     setFilteredDevices(filtered);
-    // Calculate total pages
     setTotalPages(Math.max(1, Math.ceil(filtered.length / itemsPerPage)));
-    // Reset to first page when filters change
     setCurrentPage(1);
   };
 
@@ -275,7 +264,6 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
     try {
       const deviceIds = selectedDevices.map(device => device.id);
       
-      // Call the RPC function with updated parameters
       const { error } = await supabase.rpc('add_devices_to_sales_order', {
         p_sales_order_id: salesOrderId,
         p_device_ids: deviceIds
@@ -291,10 +279,8 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
         description: `Added ${selectedDevices.length} devices to the sales order`,
       });
 
-      // Call the callback to refresh the parent component
       onDevicesAdded();
       
-      // Close the modal
       onClose();
     } catch (error) {
       console.error('Error saving devices:', error);
@@ -309,7 +295,6 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
     }
   };
 
-  // Get current page items
   const getCurrentPageItems = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
@@ -330,7 +315,6 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
         </DialogHeader>
         
         <div className="space-y-4">
-          {/* Supplier Selection */}
           <div>
             <label className="block text-sm font-medium mb-1">Select Supplier</label>
             <Select 
@@ -352,7 +336,6 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
 
           {selectedSupplier && (
             <>
-              {/* Filter controls */}
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <div className="relative flex-1">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -405,7 +388,6 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
                 </Button>
               </div>
 
-              {/* Devices Table */}
               <div className="border rounded-md">
                 <Table>
                   <TableHeader>
@@ -460,7 +442,6 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
                   </TableBody>
                 </Table>
 
-                {/* Pagination */}
                 {filteredDevices.length > 0 && (
                   <div className="flex items-center justify-between p-4 border-t">
                     <div className="text-sm text-muted-foreground">
