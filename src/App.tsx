@@ -6,6 +6,7 @@ import Sidebar from './components/layout/Sidebar';
 import Index from './pages/Index';
 import Products from './pages/Products';
 import Customers from './pages/Customers';
+import Suppliers from './pages/Suppliers';
 import Orders from './pages/Orders';
 import GoodsOut from './pages/GoodsOut';
 import SalesOrderDetail from './pages/SalesOrderDetail';
@@ -32,6 +33,7 @@ const App: React.FC = () => {
               <Route path="/products" element={<Products />} />
               <Route path="/device/:id" element={<DeviceDetail />} />
               <Route path="/customers" element={<Customers />} />
+              <Route path="/suppliers" element={<Suppliers />} />
               <Route path="/orders" element={<Orders />} />
               <Route path="/goods-out" element={<GoodsOut />} />
               <Route path="/sales/:id" element={<SalesOrderDetail />} />

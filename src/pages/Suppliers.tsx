@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Users, 
+  Building, 
   Plus, 
   Search, 
   Filter, 
@@ -23,33 +23,33 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 
-const Customers = () => {
-  const [customers, setCustomers] = useState([]);
+const Suppliers = () => {
+  const [suppliers, setSuppliers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchCustomers();
+    fetchSuppliers();
   }, []);
 
-  const fetchCustomers = async () => {
+  const fetchSuppliers = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('customers')
+        .from('suppliers')
         .select('*');
 
       if (error) {
         throw error;
       }
 
-      setCustomers(data || []);
+      setSuppliers(data || []);
     } catch (error) {
-      console.error('Error fetching customers:', error);
+      console.error('Error fetching suppliers:', error);
       toast({
         title: "Error",
-        description: "Failed to load customers. Please try again.",
+        description: "Failed to load suppliers. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -57,18 +57,18 @@ const Customers = () => {
     }
   };
 
-  const filteredCustomers = customers.filter(customer => 
-    customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phone?.includes(searchTerm) ||
-    customer.customer_code?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredSuppliers = suppliers.filter(supplier => 
+    supplier.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    supplier.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    supplier.phone?.includes(searchTerm) ||
+    supplier.supplier_code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div className="animate-fade-in">
       <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
-        <p className="text-muted-foreground">View and manage customer information.</p>
+        <h1 className="text-3xl font-bold tracking-tight">Suppliers</h1>
+        <p className="text-muted-foreground">View and manage supplier information.</p>
       </div>
       
       <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -77,7 +77,7 @@ const Customers = () => {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <input
               type="search"
-              placeholder="Search customers..."
+              placeholder="Search suppliers..."
               className="w-full rounded-md border border-input pl-8 pr-4 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -92,7 +92,7 @@ const Customers = () => {
         
         <button className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
           <Plus className="h-4 w-4 mr-2" />
-          Add Customer
+          Add Supplier
         </button>
       </div>
       
@@ -103,7 +103,7 @@ const Customers = () => {
               <TableRow>
                 <TableHead>
                   <div className="flex items-center gap-1">
-                    Customer
+                    Supplier
                     <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
                   </div>
                 </TableHead>
@@ -124,38 +124,36 @@ const Customers = () => {
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={7} className="h-24 text-center">
-                    Loading customers...
+                    Loading suppliers...
                   </TableCell>
                 </TableRow>
-              ) : filteredCustomers.length === 0 ? (
+              ) : filteredSuppliers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="h-24 text-center">
-                    No customers found.
+                    No suppliers found.
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredCustomers.map((customer) => (
-                  <TableRow key={customer.id}>
+                filteredSuppliers.map((supplier) => (
+                  <TableRow key={supplier.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center">
-                          <span className="text-sm font-medium">
-                            {customer.name?.split(' ').map(n => n[0]).join('').toUpperCase() || '??'}
-                          </span>
+                          <Building className="h-5 w-5" />
                         </div>
-                        <span className="font-medium">{customer.name}</span>
+                        <span className="font-medium">{supplier.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{customer.customer_code}</TableCell>
-                    <TableCell>{customer.email || '-'}</TableCell>
-                    <TableCell>{customer.phone || '-'}</TableCell>
+                    <TableCell>{supplier.supplier_code}</TableCell>
+                    <TableCell>{supplier.email || '-'}</TableCell>
+                    <TableCell>{supplier.phone || '-'}</TableCell>
                     <TableCell>
-                      {customer.city || customer.country ? 
-                        `${customer.city || ''} ${customer.country ? (customer.city ? ', ' : '') + customer.country : ''}` 
+                      {supplier.city || supplier.country ? 
+                        `${supplier.city || ''} ${supplier.country ? (supplier.city ? ', ' : '') + supplier.country : ''}` 
                         : '-'}
                     </TableCell>
                     <TableCell className="text-right">
-                      {customer.created_at ? format(new Date(customer.created_at), 'MMM d, yyyy') : '-'}
+                      {supplier.created_at ? format(new Date(supplier.created_at), 'MMM d, yyyy') : '-'}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -179,7 +177,7 @@ const Customers = () => {
         
         <div className="flex items-center justify-between border-t border-border p-4">
           <div className="text-sm text-muted-foreground">
-            Showing <strong>1-{filteredCustomers.length}</strong> of <strong>{customers.length}</strong> customers
+            Showing <strong>1-{filteredSuppliers.length}</strong> of <strong>{suppliers.length}</strong> suppliers
           </div>
           
           <div className="flex items-center gap-2">
@@ -196,4 +194,4 @@ const Customers = () => {
   );
 };
 
-export default Customers;
+export default Suppliers;
