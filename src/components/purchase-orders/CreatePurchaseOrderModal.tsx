@@ -63,6 +63,11 @@ interface OrderItem {
   device_type: string;
 }
 
+// Define the response type from the RPC function
+interface ModelResponse {
+  model_name: string;
+}
+
 const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
   isOpen,
   onClose,
@@ -164,7 +169,7 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
 
       // Use RPC function to get models for the selected manufacturer
       const { data, error } = await supabase
-        .rpc('fn_search_models_by_manufacturer', {
+        .rpc<ModelResponse>('fn_search_models_by_manufacturer', {
           p_manufacturer_id: selectedManufacturer
         });
 
@@ -178,8 +183,9 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
         return;
       }
 
-      // Now data is an array of strings representing model names
-      setModels(data || []);
+      // Extract model names from the response and set them to state
+      const modelNames = data ? data.map(item => item.model_name) : [];
+      setModels(modelNames);
     };
 
     fetchModels();
@@ -291,10 +297,10 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
         device_type: item.device_type
       }));
 
-      // Use .insert() method with an array of objects
+      // Use upsert here to handle the insert with our array of objects
       const { error: devicesError } = await supabase
         .from('purchase_order_devices_planned')
-        .insert(plannedDevicesData);
+        .upsert(plannedDevicesData);
 
       if (devicesError) {
         throw devicesError;
