@@ -162,6 +162,7 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
         return;
       }
 
+      // Use RPC function to get models for the selected manufacturer
       const { data, error } = await supabase
         .rpc('fn_search_models_by_manufacturer', {
           p_manufacturer_id: selectedManufacturer
@@ -177,6 +178,7 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
         return;
       }
 
+      // Now data is an array of strings representing model names
       setModels(data || []);
     };
 
@@ -289,6 +291,7 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
         device_type: item.device_type
       }));
 
+      // Use .insert() method with an array of objects
       const { error: devicesError } = await supabase
         .from('purchase_order_devices_planned')
         .insert(plannedDevicesData);
