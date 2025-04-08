@@ -517,7 +517,6 @@ export type Database = {
         Row: {
           color: string | null
           created_at: string | null
-          created_by: string
           device_type: string
           grade_id: number | null
           id: string
@@ -527,12 +526,10 @@ export type Database = {
           quantity: number
           storage_gb: number | null
           updated_at: string | null
-          updated_by: string
         }
         Insert: {
           color?: string | null
           created_at?: string | null
-          created_by: string
           device_type: string
           grade_id?: number | null
           id?: string
@@ -542,12 +539,10 @@ export type Database = {
           quantity?: number
           storage_gb?: number | null
           updated_at?: string | null
-          updated_by: string
         }
         Update: {
           color?: string | null
           created_at?: string | null
-          created_by?: string
           device_type?: string
           grade_id?: number | null
           id?: string
@@ -557,7 +552,6 @@ export type Database = {
           quantity?: number
           storage_gb?: number | null
           updated_at?: string | null
-          updated_by?: string
         }
         Relationships: [
           {

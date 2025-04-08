@@ -299,9 +299,7 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
         storage_gb: item.storage_gb,
         color: item.color,
         grade_id: item.grade_id,
-        device_type: item.device_type,
-        created_by: 'system',
-        updated_by: 'system'
+        device_type: item.device_type
       }));
 
       const { error: devicesError } = await supabase
