@@ -163,7 +163,7 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
       }
 
       try {
-        // Use p_manufacturer parameter as expected by the database function
+        // Use the correct parameter name as expected by the database function
         const { data, error } = await supabase
           .rpc('fn_search_models_by_manufacturer', {
             p_manufacturer: selectedManufacturerName
@@ -304,7 +304,7 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
 
       const { error: devicesError } = await supabase
         .from('purchase_order_devices_planned')
-        .upsert(plannedDevicesData);
+        .insert(plannedDevicesData);
 
       if (devicesError) {
         throw devicesError;
