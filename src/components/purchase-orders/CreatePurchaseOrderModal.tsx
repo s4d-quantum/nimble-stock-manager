@@ -167,9 +167,9 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
         return;
       }
 
-      // Fixed TypeScript error - specify the correct return type for rpc
+      // Fixed TypeScript error - specify both type parameters for rpc
       const { data, error } = await supabase
-        .rpc<ModelResponse[]>('fn_search_models_by_manufacturer', {
+        .rpc<ModelResponse[], ModelResponse[]>('fn_search_models_by_manufacturer', {
           p_manufacturer_id: selectedManufacturer
         });
 
