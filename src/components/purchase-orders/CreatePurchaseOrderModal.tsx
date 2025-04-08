@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Save, CheckCircle, Trash2 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
@@ -162,17 +163,20 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
       }
 
       try {
+        // Use p_manufacturer_name instead of p_manufacturer to match the TypeScript type definition
         const { data, error } = await supabase
           .rpc('fn_search_models_by_manufacturer', {
-            p_manufacturer: selectedManufacturerName
+            p_manufacturer_name: selectedManufacturerName
           });
 
         if (error) {
           throw error;
         }
 
+        // Fix the type mismatch by extracting the model_name string from each object
         if (data && Array.isArray(data)) {
-          setModels(data);
+          const modelNames = data.map(item => item.model_name);
+          setModels(modelNames);
         }
       } catch (error) {
         console.error('Error fetching models:', error);
