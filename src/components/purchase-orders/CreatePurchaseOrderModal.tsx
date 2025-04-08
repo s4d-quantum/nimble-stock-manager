@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Save, CheckCircle, Trash2 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
@@ -163,10 +162,9 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
       }
 
       try {
-        // Use the updated fn_search_models_by_manufacturer function
         const { data, error } = await supabase
           .rpc('fn_search_models_by_manufacturer', {
-            p_manufacturer_name: selectedManufacturerName
+            p_manufacturer: selectedManufacturerName
           });
 
         if (error) {

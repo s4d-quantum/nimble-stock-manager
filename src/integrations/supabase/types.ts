@@ -1164,7 +1164,7 @@ export type Database = {
         Returns: string
       }
       fn_search_models_by_manufacturer: {
-        Args: { p_manufacturer_name: string; p_search?: string }
+        Args: { p_manufacturer: string; p_search?: string }
         Returns: {
           model_name: string
         }[]
