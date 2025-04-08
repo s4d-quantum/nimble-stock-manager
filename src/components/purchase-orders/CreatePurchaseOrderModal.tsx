@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Save, CheckCircle, Trash2 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
@@ -85,7 +84,7 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
     storage_gb: null,
     color: null,
     grade_id: null,
-    device_type: 'cellular' // Default to cellular
+    device_type: 'cellular'
   }]);
   const [loading, setLoading] = useState(false);
 
@@ -156,7 +155,6 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
   }, [isOpen, toast]);
 
   useEffect(() => {
-    // When manufacturer changes, fetch models based on manufacturer name
     const fetchModels = async () => {
       if (!selectedManufacturerName) {
         setModels([]);
@@ -164,7 +162,6 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
       }
 
       try {
-        // Direct query to tac_codes table using the manufacturer name
         const { data, error } = await supabase
           .from('tac_codes')
           .select('model_name')
@@ -175,9 +172,10 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
           throw error;
         }
 
-        // Extract unique model names
-        const uniqueModels = Array.from(new Set(data.map(item => item.model_name)));
-        setModels(uniqueModels);
+        if (data && Array.isArray(data)) {
+          const uniqueModels = Array.from(new Set(data.map(item => item.model_name)));
+          setModels(uniqueModels);
+        }
       } catch (error) {
         console.error('Error fetching models:', error);
         toast({
@@ -193,13 +191,12 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
   }, [selectedManufacturerName, toast]);
 
   const generatePoNumber = () => {
-    // Generate PO number: PO-YYYYMMDD-XXX where XXX is a random 3-digit number
     const date = new Date();
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    const random = Math.floor(Math.random() * 900) + 100; // Random 3-digit number
-    
+    const random = Math.floor(Math.random() * 900) + 100;
+
     setPoNumber(`PO-${year}${month}${day}-${random}`);
   };
 
@@ -218,7 +215,6 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
 
   const handleRemoveItem = (id: string) => {
     if (orderItems.length === 1) {
-      // Don't remove the last item, just reset it
       setOrderItems([{
         id: crypto.randomUUID(),
         quantity: 1,
@@ -238,7 +234,6 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
     setOrderItems(orderItems.map(item => {
       if (item.id === id) {
         if (field === 'manufacturer_id' && value) {
-          // Find manufacturer name when manufacturer_id changes
           const manufacturer = manufacturers.find(m => m.id === value);
           if (manufacturer) {
             setSelectedManufacturerName(manufacturer.name);
@@ -260,7 +255,6 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
       return;
     }
 
-    // Validate all items
     for (const item of orderItems) {
       if (!item.manufacturer_id || !item.model_name || item.quantity <= 0) {
         toast({
@@ -275,7 +269,6 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
     setLoading(true);
 
     try {
-      // First create the purchase order
       const { data: orderData, error: orderError } = await supabase
         .from('purchase_orders')
         .insert({
@@ -296,7 +289,6 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
 
       const purchaseOrderId = orderData.id;
 
-      // Then create planned devices for the order
       const plannedDevicesData = orderItems.map(item => ({
         purchase_order_id: purchaseOrderId,
         quantity: item.quantity,
@@ -305,10 +297,11 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
         storage_gb: item.storage_gb,
         color: item.color,
         grade_id: item.grade_id,
-        device_type: item.device_type
+        device_type: item.device_type,
+        created_by: 'system',
+        updated_by: 'system'
       }));
 
-      // Use upsert to avoid issues with column changes
       const { error: devicesError } = await supabase
         .from('purchase_order_devices_planned')
         .upsert(plannedDevicesData);
@@ -430,7 +423,6 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
                                 updateOrderItem(item.id, 'manufacturer_id', value);
                                 setSelectedManufacturer(value);
                                 
-                                // Update selected manufacturer name for model lookup
                                 const manufacturer = manufacturers.find(m => m.id === value);
                                 if (manufacturer) {
                                   setSelectedManufacturerName(manufacturer.name);
