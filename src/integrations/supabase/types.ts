@@ -1169,6 +1169,12 @@ export type Database = {
           model_name: string
         }[]
       }
+      fn_search_models_by_manufacturer_name: {
+        Args: { p_manufacturer_name: string; p_search?: string }
+        Returns: {
+          model_name: string
+        }[]
+      }
       fn_split_to_array: {
         Args: { p_string: string }
         Returns: string[]
