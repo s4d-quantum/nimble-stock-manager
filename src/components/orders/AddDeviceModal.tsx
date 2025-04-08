@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -356,7 +357,7 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
                     <SelectValue placeholder="Manufacturer" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="_all">All Manufacturers</SelectItem>
+                    <SelectItem value="">All Manufacturers</SelectItem>
                     {manufacturers.map(manufacturer => (
                       <SelectItem key={manufacturer} value={manufacturer}>
                         {manufacturer}
@@ -373,7 +374,7 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
                     <SelectValue placeholder="Model" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="_all">All Models</SelectItem>
+                    <SelectItem value="">All Models</SelectItem>
                     {models.map(model => (
                       <SelectItem key={model} value={model}>
                         {model}

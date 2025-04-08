@@ -63,11 +63,6 @@ interface OrderItem {
   device_type: string;
 }
 
-// Define the response type from the RPC function
-interface ModelResponse {
-  model_name: string;
-}
-
 const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
   isOpen,
   onClose,
@@ -80,6 +75,7 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
   const [models, setModels] = useState<string[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
   const [selectedManufacturer, setSelectedManufacturer] = useState<string | null>(null);
+  const [selectedManufacturerName, setSelectedManufacturerName] = useState<string>('');
   const [poNumber, setPoNumber] = useState('');
   const [orderItems, setOrderItems] = useState<OrderItem[]>([{
     id: crypto.randomUUID(),
@@ -160,36 +156,41 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
   }, [isOpen, toast]);
 
   useEffect(() => {
-    // When manufacturer changes, fetch models
+    // When manufacturer changes, fetch models based on manufacturer name
     const fetchModels = async () => {
-      if (!selectedManufacturer) {
+      if (!selectedManufacturerName) {
         setModels([]);
         return;
       }
 
-      // Fixed TypeScript error - specify both type parameters for rpc
-      const { data, error } = await supabase
-        .rpc<ModelResponse[], ModelResponse[]>('fn_search_models_by_manufacturer', {
-          p_manufacturer_id: selectedManufacturer
-        });
+      try {
+        // Direct query to tac_codes table using the manufacturer name
+        const { data, error } = await supabase
+          .from('tac_codes')
+          .select('model_name')
+          .ilike('manufacturer', `%${selectedManufacturerName}%`)
+          .order('model_name');
 
-      if (error) {
+        if (error) {
+          throw error;
+        }
+
+        // Extract unique model names
+        const uniqueModels = Array.from(new Set(data.map(item => item.model_name)));
+        setModels(uniqueModels);
+      } catch (error) {
         console.error('Error fetching models:', error);
         toast({
           title: "Error",
           description: "Failed to load models. Please try again.",
           variant: "destructive",
         });
-        return;
+        setModels([]);
       }
-
-      // Fixed TypeScript error - ensure data is an array before mapping
-      const modelNames = Array.isArray(data) ? data.map(item => item.model_name) : [];
-      setModels(modelNames);
     };
 
     fetchModels();
-  }, [selectedManufacturer, toast]);
+  }, [selectedManufacturerName, toast]);
 
   const generatePoNumber = () => {
     // Generate PO number: PO-YYYYMMDD-XXX where XXX is a random 3-digit number
@@ -234,9 +235,19 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
   };
 
   const updateOrderItem = (id: string, field: keyof OrderItem, value: any) => {
-    setOrderItems(orderItems.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    ));
+    setOrderItems(orderItems.map(item => {
+      if (item.id === id) {
+        if (field === 'manufacturer_id' && value) {
+          // Find manufacturer name when manufacturer_id changes
+          const manufacturer = manufacturers.find(m => m.id === value);
+          if (manufacturer) {
+            setSelectedManufacturerName(manufacturer.name);
+          }
+        }
+        return { ...item, [field]: value };
+      }
+      return item;
+    }));
   };
 
   const handleSave = async (finalize: boolean) => {
@@ -294,17 +305,13 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
         storage_gb: item.storage_gb,
         color: item.color,
         grade_id: item.grade_id,
-        device_type: item.device_type,
-        // Add created_by and updated_by as empty strings to satisfy TypeScript
-        // These will be ignored by the database since they were removed
-        created_by: '',
-        updated_by: ''
+        device_type: item.device_type
       }));
 
-      // Fixed TypeScript error - use normal insert with the required fields
+      // Use upsert to avoid issues with column changes
       const { error: devicesError } = await supabase
         .from('purchase_order_devices_planned')
-        .insert(plannedDevicesData);
+        .upsert(plannedDevicesData);
 
       if (devicesError) {
         throw devicesError;
@@ -421,8 +428,12 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
                               value={item.manufacturer_id || ""} 
                               onValueChange={(value) => {
                                 updateOrderItem(item.id, 'manufacturer_id', value);
-                                if (item.id === orderItems[orderItems.length - 1].id) {
-                                  setSelectedManufacturer(value);
+                                setSelectedManufacturer(value);
+                                
+                                // Update selected manufacturer name for model lookup
+                                const manufacturer = manufacturers.find(m => m.id === value);
+                                if (manufacturer) {
+                                  setSelectedManufacturerName(manufacturer.name);
                                 }
                               }}
                             >
