@@ -163,10 +163,10 @@ const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> = ({
       }
 
       try {
-        // Use p_manufacturer_name instead of p_manufacturer to match the TypeScript type definition
+        // Use p_manufacturer parameter as expected by the database function
         const { data, error } = await supabase
           .rpc('fn_search_models_by_manufacturer', {
-            p_manufacturer_name: selectedManufacturerName
+            p_manufacturer: selectedManufacturerName
           });
 
         if (error) {
