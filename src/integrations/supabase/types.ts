@@ -90,6 +90,27 @@ export type Database = {
         }
         Relationships: []
       }
+      canonical_models: {
+        Row: {
+          device_type: string | null
+          id: string
+          name: string
+          notes: string | null
+        }
+        Insert: {
+          device_type?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+        }
+        Update: {
+          device_type?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+        }
+        Relationships: []
+      }
       cellular_device_transactions: {
         Row: {
           created_at: string | null
@@ -296,6 +317,74 @@ export type Database = {
           release_year?: number | null
           storage_options?: string[] | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      device_models: {
+        Row: {
+          common_model_no: string
+          id: number
+          manufacturer: string
+          model_name: string
+        }
+        Insert: {
+          common_model_no: string
+          id: number
+          manufacturer: string
+          model_name: string
+        }
+        Update: {
+          common_model_no?: string
+          id?: number
+          manufacturer?: string
+          model_name?: string
+        }
+        Relationships: []
+      }
+      device_variants: {
+        Row: {
+          device_model_id: number
+          id: number
+          model_no: string
+          tac_code: string
+        }
+        Insert: {
+          device_model_id: number
+          id: number
+          model_no: string
+          tac_code: string
+        }
+        Update: {
+          device_model_id?: number
+          id?: number
+          model_no?: string
+          tac_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_variants_device_model_id_fkey"
+            columns: ["device_model_id"]
+            isOneToOne: false
+            referencedRelation: "device_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manufacturer_synonyms: {
+        Row: {
+          canonical_name: string
+          id: string
+          raw_name: string
+        }
+        Insert: {
+          canonical_name: string
+          id?: string
+          raw_name: string
+        }
+        Update: {
+          canonical_name?: string
+          id?: string
+          raw_name?: string
         }
         Relationships: []
       }
