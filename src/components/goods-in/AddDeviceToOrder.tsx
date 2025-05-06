@@ -137,8 +137,9 @@ const AddDeviceToOrder: React.FC<AddDeviceToOrderProps> = ({
 
         if (error) throw error;
         
-        // Convert array of model_name strings to array of strings
-        setModels(data || []);
+        // Extract model_name values from the returned objects and convert to string array
+        const modelNames = (data || []).map((item: ModelData) => item.model_name);
+        setModels(modelNames);
       }
     } catch (error) {
       console.error('Error fetching models:', error);
