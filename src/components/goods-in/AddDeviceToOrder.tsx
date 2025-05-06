@@ -15,11 +15,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface AddDeviceToOrderProps {
   isOpen: boolean;
@@ -43,6 +52,16 @@ interface ModelData {
   model_name: string;
 }
 
+interface PlannedDevice {
+  id: string;
+  manufacturer_id: string;
+  manufacturer?: { name: string };
+  model_name: string;
+  storage_gb: number | null;
+  color: string | null;
+  grade_id: number | null;
+}
+
 const AddDeviceToOrder: React.FC<AddDeviceToOrderProps> = ({
   isOpen,
   onClose,
@@ -63,13 +82,19 @@ const AddDeviceToOrder: React.FC<AddDeviceToOrderProps> = ({
   const [loading, setLoading] = useState(false);
   const [tacLoading, setTacLoading] = useState(false);
   const [tacError, setTacError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [bulkMode, setBulkMode] = useState(true);
+  const [applySettingsToAll, setApplySettingsToAll] = useState(true);
+  const [plannedDevices, setPlannedDevices] = useState<PlannedDevice[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("scan");
 
   useEffect(() => {
     if (isOpen) {
       fetchManufacturers();
       fetchGrades();
+      fetchPlannedDevices();
     }
-  }, [isOpen]);
+  }, [isOpen, purchaseOrderId]);
 
   useEffect(() => {
     if (selectedManufacturer) {
@@ -117,6 +142,33 @@ const AddDeviceToOrder: React.FC<AddDeviceToOrderProps> = ({
     }
   };
 
+  const fetchPlannedDevices = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('purchase_order_devices_planned')
+        .select(`
+          id,
+          manufacturer_id,
+          manufacturer:manufacturers(name),
+          model_name,
+          storage_gb,
+          color,
+          grade_id
+        `)
+        .eq('purchase_order_id', purchaseOrderId);
+
+      if (error) throw error;
+      setPlannedDevices(data || []);
+    } catch (error) {
+      console.error('Error fetching planned devices:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load planned devices for this order.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const fetchModels = async (manufacturerId: string) => {
     try {
       const { data: manufacturerData, error: manufacturerError } = await supabase
@@ -159,6 +211,7 @@ const AddDeviceToOrder: React.FC<AddDeviceToOrderProps> = ({
 
     setTacLoading(true);
     setTacError(null);
+    setValidationError(null);
 
     try {
       // Extract TAC code (first 8 digits of IMEI)
@@ -179,6 +232,13 @@ const AddDeviceToOrder: React.FC<AddDeviceToOrderProps> = ({
       if (data) {
         setTacId(data.id);
         
+        // Validate the device against the planned devices
+        const isValidDevice = validateDeviceAgainstPlanned(data.manufacturer, data.model_name);
+        if (!isValidDevice) {
+          setValidationError("This device does not match any planned devices on this purchase order");
+          return;
+        }
+        
         // Find and set the manufacturer
         const manufacturer = manufacturers.find(m => m.name.toLowerCase() === data.manufacturer.toLowerCase());
         if (manufacturer) {
@@ -186,6 +246,12 @@ const AddDeviceToOrder: React.FC<AddDeviceToOrderProps> = ({
         }
         
         setModelName(data.model_name);
+
+        // If in bulk mode and device is valid, submit it automatically
+        if (bulkMode && applySettingsToAll) {
+          await handleSubmit();
+          setImei(''); // Clear IMEI for next scan
+        }
       }
     } catch (error) {
       console.error('Error in device lookup:', error);
@@ -195,11 +261,32 @@ const AddDeviceToOrder: React.FC<AddDeviceToOrderProps> = ({
     }
   };
 
+  const validateDeviceAgainstPlanned = (manufacturer: string, model: string): boolean => {
+    // If there are no planned devices, allow any device (more permissive)
+    if (plannedDevices.length === 0) return true;
+    
+    return plannedDevices.some(device => {
+      const manufacturerName = device.manufacturer?.name || '';
+      // Case-insensitive comparison
+      return manufacturerName.toLowerCase() === manufacturer.toLowerCase() && 
+             device.model_name.toLowerCase() === model.toLowerCase();
+    });
+  };
+
   const handleSubmit = async () => {
     if (!imei.trim()) {
       toast({
         title: "Missing Information",
         description: "Please provide an IMEI number.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (validationError) {
+      toast({
+        title: "Validation Error",
+        description: validationError,
         variant: "destructive",
       });
       return;
@@ -224,14 +311,14 @@ const AddDeviceToOrder: React.FC<AddDeviceToOrderProps> = ({
 
       if (deviceError) throw deviceError;
 
-      // Associate the device with the purchase order
+      // Associate the device with the purchase order - only include required fields
       const { error: poDeviceError } = await supabase
         .from('purchase_order_devices')
         .insert({
           purchase_order_id: purchaseOrderId,
           cellular_device_id: deviceData.id,
-          created_by: '00000000-0000-0000-0000-000000000000', // Placeholder UUID for now
-          updated_by: '00000000-0000-0000-0000-000000000000'  // Placeholder UUID for now
+          created_by: '00000000-0000-0000-0000-000000000000', // Placeholder UUID
+          updated_by: '00000000-0000-0000-0000-000000000000'  // Placeholder UUID
         });
 
       if (poDeviceError) throw poDeviceError;
@@ -242,8 +329,19 @@ const AddDeviceToOrder: React.FC<AddDeviceToOrderProps> = ({
       });
 
       onDeviceAdded();
-      resetForm();
-      onClose();
+      
+      if (!bulkMode) {
+        resetForm();
+        onClose();
+      } else {
+        // In bulk mode, just clear the IMEI and leave other settings
+        setImei('');
+        setTacId('');
+        setTacError(null);
+        setValidationError(null);
+        // Focus back on IMEI field for next scan
+        document.getElementById('imei')?.focus();
+      }
     } catch (error: any) {
       console.error('Error adding device:', error);
       toast({
@@ -265,6 +363,17 @@ const AddDeviceToOrder: React.FC<AddDeviceToOrderProps> = ({
     setSelectedGrade('');
     setTacId('');
     setTacError(null);
+    setValidationError(null);
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (value === "scan") {
+      // When switching to scan tab, focus on IMEI input
+      setTimeout(() => {
+        document.getElementById('imei')?.focus();
+      }, 100);
+    }
   };
 
   return (
@@ -273,115 +382,168 @@ const AddDeviceToOrder: React.FC<AddDeviceToOrderProps> = ({
         <DialogHeader>
           <DialogTitle>Add Device to Order</DialogTitle>
           <DialogDescription>
-            Enter the device details to add it to this purchase order.
+            {bulkMode 
+              ? "Quickly scan multiple devices with the same specifications." 
+              : "Enter the device details to add it to this purchase order."}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="imei">IMEI Number</Label>
-            <div className="flex space-x-2">
-              <Input
-                id="imei"
-                value={imei}
-                onChange={(e) => setImei(e.target.value)}
-                placeholder="Enter device IMEI"
-                className="flex-1"
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
+          <TabsList className="grid grid-cols-2">
+            <TabsTrigger value="scan">Scan Devices</TabsTrigger>
+            <TabsTrigger value="settings">Device Settings</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="scan" className="space-y-4 py-4">
+            <div className="flex items-center space-x-2 mb-4">
+              <Checkbox 
+                id="bulkMode" 
+                checked={bulkMode} 
+                onCheckedChange={(checked) => setBulkMode(checked as boolean)} 
               />
-              <Button 
-                type="button" 
-                variant="outline"
-                onClick={lookupDeviceInfo}
-                disabled={tacLoading || !imei}
+              <label 
+                htmlFor="bulkMode" 
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                Lookup
-              </Button>
+                Bulk scanning mode
+              </label>
             </div>
-            {tacError && (
-              <p className="text-sm text-red-500">{tacError}</p>
+            
+            {validationError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{validationError}</AlertDescription>
+              </Alert>
             )}
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="manufacturer">Manufacturer</Label>
-              <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
+              <Label htmlFor="imei">IMEI Number</Label>
+              <div className="flex space-x-2">
+                <Input
+                  id="imei"
+                  value={imei}
+                  onChange={(e) => setImei(e.target.value)}
+                  placeholder="Scan or enter device IMEI"
+                  className="flex-1"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      lookupDeviceInfo();
+                    }
+                  }}
+                />
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={lookupDeviceInfo}
+                  disabled={tacLoading || !imei}
+                >
+                  Lookup
+                </Button>
+              </div>
+              {tacError && (
+                <p className="text-sm text-red-500">{tacError}</p>
+              )}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="settings" className="space-y-4 py-4">
+            <div className="flex items-center space-x-2 mb-4">
+              <Checkbox 
+                id="applyToAll" 
+                checked={applySettingsToAll} 
+                onCheckedChange={(checked) => setApplySettingsToAll(checked as boolean)} 
+              />
+              <label 
+                htmlFor="applyToAll" 
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Apply these settings to all scanned devices
+              </label>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="manufacturer">Manufacturer</Label>
+                <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select manufacturer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {manufacturers.map((manufacturer) => (
+                      <SelectItem key={manufacturer.id} value={manufacturer.id}>
+                        {manufacturer.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="model">Model</Label>
+                <Select value={modelName} onValueChange={setModelName} disabled={models.length === 0}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {models.map((model) => (
+                      <SelectItem key={model} value={model}>
+                        {model}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="storage">Storage (GB)</Label>
+                <Input
+                  id="storage"
+                  type="number"
+                  value={storage}
+                  onChange={(e) => setStorage(e.target.value)}
+                  placeholder="e.g., 64"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="color">Color</Label>
+                <Input
+                  id="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  placeholder="e.g., Black"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="grade">Grade</Label>
+              <Select value={selectedGrade} onValueChange={setSelectedGrade}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select manufacturer" />
+                  <SelectValue placeholder="Select grade" />
                 </SelectTrigger>
                 <SelectContent>
-                  {manufacturers.map((manufacturer) => (
-                    <SelectItem key={manufacturer.id} value={manufacturer.id}>
-                      {manufacturer.name}
+                  {grades.map((grade) => (
+                    <SelectItem key={grade.id} value={grade.id.toString()}>
+                      {grade.grade} {grade.description ? `- ${grade.description}` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="model">Model</Label>
-              <Select value={modelName} onValueChange={setModelName} disabled={models.length === 0}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select model" />
-                </SelectTrigger>
-                <SelectContent>
-                  {models.map((model) => (
-                    <SelectItem key={model} value={model}>
-                      {model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="storage">Storage (GB)</Label>
-              <Input
-                id="storage"
-                type="number"
-                value={storage}
-                onChange={(e) => setStorage(e.target.value)}
-                placeholder="e.g., 64"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="color">Color</Label>
-              <Input
-                id="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                placeholder="e.g., Black"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="grade">Grade</Label>
-            <Select value={selectedGrade} onValueChange={setSelectedGrade}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select grade" />
-              </SelectTrigger>
-              <SelectContent>
-                {grades.map((grade) => (
-                  <SelectItem key={grade.id} value={grade.id.toString()}>
-                    {grade.grade} {grade.description ? `- ${grade.description}` : ''}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
 
         <DialogFooter className="sm:justify-between">
           <Button variant="outline" onClick={onClose} disabled={loading}>
-            Cancel
+            {bulkMode ? "Done" : "Cancel"}
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            Add Device
+          <Button onClick={handleSubmit} disabled={loading || !imei.trim()}>
+            {bulkMode ? "Add Device & Continue" : "Add Device"}
           </Button>
         </DialogFooter>
       </DialogContent>
