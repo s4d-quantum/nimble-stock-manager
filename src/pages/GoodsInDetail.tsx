@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -166,7 +167,7 @@ const GoodsInDetail = () => {
           )
         `)
         .eq('purchase_order_id', orderId)
-        .is('cellular_device_id', 'not.null');
+        .not('cellular_device_id', 'is', null);
 
       if (error) throw error;
       setReceivedDevices(data || []);
