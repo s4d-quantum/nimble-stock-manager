@@ -65,7 +65,7 @@ const GoodsIn = () => {
           status,
           supplier:suppliers(name, supplier_code)
         `)
-        .in('status', ['processing', 'confirmed', 'completed'])
+        .in('status', ['processing', 'confirmed', 'complete'])
         .order('created_at', { ascending: false });
 
       if (poError) {

@@ -39,6 +39,10 @@ interface ProductGrade {
   description: string | null;
 }
 
+interface ModelData {
+  model_name: string;
+}
+
 const AddDeviceToOrder: React.FC<AddDeviceToOrderProps> = ({
   isOpen,
   onClose,
@@ -47,7 +51,7 @@ const AddDeviceToOrder: React.FC<AddDeviceToOrderProps> = ({
 }) => {
   const { toast } = useToast();
   const [imei, setImei] = useState('');
-  const [modelName, setModelName] = useState('');
+  const [modelName, setModelName] = useState<string>('');
   const [storage, setStorage] = useState<string>('');
   const [color, setColor] = useState('');
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
@@ -132,7 +136,8 @@ const AddDeviceToOrder: React.FC<AddDeviceToOrderProps> = ({
           });
 
         if (error) throw error;
-
+        
+        // Convert array of model_name strings to array of strings
         setModels(data || []);
       }
     } catch (error) {
@@ -224,6 +229,8 @@ const AddDeviceToOrder: React.FC<AddDeviceToOrderProps> = ({
         .insert({
           purchase_order_id: purchaseOrderId,
           cellular_device_id: deviceData.id,
+          created_by: '00000000-0000-0000-0000-000000000000', // Placeholder UUID for now
+          updated_by: '00000000-0000-0000-0000-000000000000'  // Placeholder UUID for now
         });
 
       if (poDeviceError) throw poDeviceError;
