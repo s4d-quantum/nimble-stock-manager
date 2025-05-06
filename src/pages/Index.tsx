@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BarChart3, PackageOpen, ArrowDownLeft, TestTube, RotateCcw, Boxes, CircleDollarSign, TrendingUp, Clock } from 'lucide-react';
 import DashboardCard from '../components/dashboard/DashboardCard';
@@ -93,7 +94,6 @@ const Index = () => {
     <div className="animate-fade-in">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome to your inventory management system.</p>
       </div>
 
       {/* Stats Section */}

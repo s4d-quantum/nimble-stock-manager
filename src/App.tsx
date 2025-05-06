@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
 import Index from './pages/Index';
 import Products from './pages/Products';
@@ -25,8 +24,7 @@ const App: React.FC = () => {
   return (
     <Router>
       <div className="relative flex min-h-screen flex-col">
-        <Navbar toggleSidebar={toggleSidebar} />
-        <div className="flex flex-1 pt-16">
+        <div className="flex flex-1">
           <Sidebar isOpen={sidebarOpen} closeSidebar={closeSidebar} />
           <main className="flex-1 p-4 md:p-6 overflow-y-auto">
             <Routes>

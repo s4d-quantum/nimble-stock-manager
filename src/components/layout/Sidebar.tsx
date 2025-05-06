@@ -49,7 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
           <div className="rounded-md bg-primary p-1">
             <Package className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="text-xl font-semibold tracking-tight">Inventory</span>
+          <span className="text-xl font-semibold tracking-tight">Quantum 2.0</span>
         </Link>
         <button 
           onClick={closeSidebar}
