@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -24,7 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import AddDeviceToOrder from '@/components/goods-in/AddDeviceToOrder';
+import AddDeviceToOrderFixed from '@/components/goods-in/AddDeviceToOrderFixed';
 
 interface PurchaseOrder {
   id: string;
@@ -395,7 +394,7 @@ const GoodsInDetail = () => {
         </Tabs>
       </div>
 
-      <AddDeviceToOrder 
+      <AddDeviceToOrderFixed 
         isOpen={isAddDeviceModalOpen} 
         onClose={() => setIsAddDeviceModalOpen(false)}
         purchaseOrderId={id || ''}
