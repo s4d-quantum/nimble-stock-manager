@@ -9,6 +9,8 @@ import Suppliers from './pages/Suppliers';
 import Orders from './pages/Orders';
 import GoodsOut from './pages/GoodsOut';
 import PurchaseOrders from './pages/PurchaseOrders';
+import GoodsIn from './pages/GoodsIn';
+import GoodsInDetail from './pages/GoodsInDetail';
 import SalesOrderDetail from './pages/SalesOrderDetail';
 import DeviceDetail from './pages/DeviceDetail';
 import NotFound from './pages/NotFound';
@@ -35,6 +37,8 @@ const App: React.FC = () => {
               <Route path="/suppliers" element={<Suppliers />} />
               <Route path="/orders" element={<Orders />} />
               <Route path="/purchase-orders" element={<PurchaseOrders />} />
+              <Route path="/goods-in" element={<GoodsIn />} />
+              <Route path="/goods-in/:id" element={<GoodsInDetail />} />
               <Route path="/goods-out" element={<GoodsOut />} />
               <Route path="/sales/:id" element={<SalesOrderDetail />} />
               <Route path="*" element={<NotFound />} />
