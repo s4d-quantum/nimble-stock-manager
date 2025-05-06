@@ -316,23 +316,7 @@ const AddDeviceToOrderFixed: React.FC<AddDeviceToOrderFixedProps> = ({
     try {
       // For each scanned device, add it to the purchase order
       for (const device of scannedDevices) {
-        // First, insert into purchase_order_devices table (without cellular_device_id yet)
-        const { data: poDeviceData, error: poDeviceError } = await supabase
-          .from('purchase_order_devices')
-          .insert({
-            purchase_order_id: purchaseOrderId,
-            // We don't set cellular_device_id yet, it will be null
-            created_by: '00000000-0000-0000-0000-000000000000', // Placeholder UUID
-            updated_by: '00000000-0000-0000-0000-000000000000'  // Placeholder UUID
-          })
-          .select('id')
-          .single();
-
-        if (poDeviceError) {
-          throw poDeviceError;
-        }
-
-        // Next, create a new cellular device record
+        // First, create a new cellular device record
         const { data: deviceData, error: deviceError } = await supabase
           .from('cellular_devices')
           .insert({
@@ -350,17 +334,18 @@ const AddDeviceToOrderFixed: React.FC<AddDeviceToOrderFixedProps> = ({
           throw deviceError;
         }
 
-        // Now update the purchase_order_devices record with the cellular_device_id
-        const { error: updateError } = await supabase
+        // Now insert into purchase_order_devices with the cellular_device_id already set
+        const { error: poDeviceError } = await supabase
           .from('purchase_order_devices')
-          .update({
-            cellular_device_id: deviceData.id,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', poDeviceData.id);
+          .insert({
+            purchase_order_id: purchaseOrderId,
+            cellular_device_id: deviceData.id, // Set the cellular_device_id directly
+            created_by: '00000000-0000-0000-0000-000000000000', // Placeholder UUID
+            updated_by: '00000000-0000-0000-0000-000000000000'  // Placeholder UUID
+          });
 
-        if (updateError) {
-          throw updateError;
+        if (poDeviceError) {
+          throw poDeviceError;
         }
       }
 
