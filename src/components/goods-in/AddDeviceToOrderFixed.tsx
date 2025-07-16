@@ -335,6 +335,11 @@ const AddDeviceToOrderFixed: React.FC<AddDeviceToOrderFixedProps> = ({
         }
 
         // Now insert into purchase_order_devices with the cellular_device_id already set
+        console.log('Inserting purchase order device with data:', {
+          purchase_order_id: purchaseOrderId,
+          cellular_device_id: deviceData.id
+        });
+        
         const { error: poDeviceError } = await supabase
           .from('purchase_order_devices')
           .insert({
@@ -345,6 +350,7 @@ const AddDeviceToOrderFixed: React.FC<AddDeviceToOrderFixedProps> = ({
           });
 
         if (poDeviceError) {
+          console.error('Purchase order device insert error:', poDeviceError);
           throw poDeviceError;
         }
       }
