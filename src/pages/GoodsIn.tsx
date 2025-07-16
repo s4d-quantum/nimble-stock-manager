@@ -75,11 +75,13 @@ const GoodsIn = () => {
       // Get planned device counts for each purchase order
       const purchaseOrdersWithDevices = await Promise.all(
         (poData || []).map(async (po) => {
-          // Get total planned devices
-          const { count: plannedCount, error: plannedError } = await supabase
+          // Get total planned devices (sum of quantities)
+          const { data: plannedData, error: plannedError } = await supabase
             .from('purchase_order_devices_planned')
-            .select('id', { count: 'exact', head: true })
+            .select('quantity')
             .eq('purchase_order_id', po.id);
+
+          const plannedCount = plannedData?.reduce((total, device) => total + device.quantity, 0) || 0;
 
           if (plannedError) {
             console.error('Error fetching planned device count:', plannedError);
