@@ -339,9 +339,9 @@ const AddDeviceToOrderFixed: React.FC<AddDeviceToOrderFixedProps> = ({
           .from('purchase_order_devices')
           .insert({
             purchase_order_id: purchaseOrderId,
-            cellular_device_id: deviceData.id, // Set the cellular_device_id directly
-            created_by: '00000000-0000-0000-0000-000000000000', // Placeholder UUID
-            updated_by: '00000000-0000-0000-0000-000000000000'  // Placeholder UUID
+            cellular_device_id: deviceData.id,
+            created_by: '00000000-0000-0000-0000-000000000000',
+            updated_by: '00000000-0000-0000-0000-000000000000'
           });
 
         if (poDeviceError) {
